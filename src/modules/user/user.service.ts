@@ -80,15 +80,6 @@ export class UserService implements BaseService<User> {
   }
 
   async findByEmail(email: string) {
-    const exist = await this.userRepo.exists({
-      where: {
-        email: email,
-      },
-    });
-
-    if (!exist)
-      throw new NotFoundException(`User with email ${email} does not exist`);
-
     return this.userRepo.findOne({
       where: { email },
       relations: ['roles', 'roles.permissions'],
@@ -96,17 +87,6 @@ export class UserService implements BaseService<User> {
   }
 
   async findByGoogleId(googleId: string) {
-    const exist = await this.userRepo.exists({
-      where: {
-        googleId: googleId,
-      },
-    });
-
-    if (!exist)
-      throw new NotFoundException(
-        `User with Google ID ${googleId} does not exist`,
-      );
-
     return this.userRepo.findOne({
       where: { googleId },
       relations: ['roles', 'roles.permissions'],

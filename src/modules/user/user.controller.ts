@@ -43,10 +43,7 @@ export class UserController {
 
   @Post()
   @RequirePermissions('user:create')
-  @UseGuards(
-    EntityExistGuard(User, { param: 'id', dto: IdParamDto }),
-    PolicyGuard,
-  )
+  @UseGuards(PolicyGuard)
   create(@Body() data: CreateUserDto) {
     return this.service.create(data);
   }
@@ -57,7 +54,7 @@ export class UserController {
     EntityExistGuard(User, { param: 'id', dto: IdParamDto }),
     PolicyGuard,
   )
-  update(@Param('id') id: string, @Body() data: UpdateUserDto) {
+  update(@Param() { id }: IdParamDto, @Body() data: UpdateUserDto) {
     return this.service.update(id, data);
   }
 

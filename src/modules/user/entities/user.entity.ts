@@ -68,5 +68,6 @@ export class User {
   updatedAt!: Date;
 
   @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  @Exclude({ toPlainOnly: true })
   deletedAt!: Date | null;
 }
