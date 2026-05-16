@@ -1,6 +1,18 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  forwardRef,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import {
+  Repository,
+  In,
+  FindOptionsWhere,
+  FindOptionsOrder,
+  Like,
+} from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import type { DeepPartial } from 'typeorm';
@@ -10,10 +22,15 @@ import { Role } from '../role/entities/role.entity';
 import { PolicyService } from './policy.service';
 import type { PolicyEvaluationContext } from './interfaces/policy-condition.interface';
 import { PermissionKey } from './enums/permission-key.enum';
+import { PermissionQueryDto } from './dto/permission-query.dto';
+import {
+  PaginatedResponse,
+  ResponseMeta,
+} from '@common/interfaces/response.interface';
 
 @Injectable()
 export class PermissionService implements BaseService<Permission> {
-  private readonly CACHE_TTL = 600000; // 10 minutes
+  private readonly CACHE_TTL = 600000;
 
   constructor(
     @InjectRepository(Permission)
@@ -23,6 +40,45 @@ export class PermissionService implements BaseService<Permission> {
     @Inject(forwardRef(() => PolicyService))
     private policyService: PolicyService,
   ) {}
+
+  async findAll(
+    query: PermissionQueryDto,
+  ): Promise<PaginatedResponse<Permission>> {
+    const { page, limit, key, description, sortBy, sortOrder } = query;
+
+    const where: FindOptionsWhere<Permission> = {};
+
+    if (key) {
+      where.key = key as PermissionKey;
+    }
+
+    if (description) {
+      where.description = Like(`%${description}%`);
+    }
+
+    const order: FindOptionsOrder<Permission> = {};
+    if (sortBy) {
+      order[sortBy] = sortOrder ?? 'ASC';
+    }
+
+    const [results, total] = await this.permissionRepo.findAndCount({
+      where,
+      order,
+      relations: ['roles'],
+      take: limit,
+      skip: (page - 1) * limit,
+    });
+
+    const meta: ResponseMeta = {
+      totalItems: total,
+      itemCount: results.length,
+      itemsPerPage: limit,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+    };
+
+    return { results, meta };
+  }
 
   async getPermissionsForRoles(roleNames: string[]): Promise<PermissionKey[]> {
     const permissionsSet = new Set<PermissionKey>();
@@ -118,29 +174,58 @@ export class PermissionService implements BaseService<Permission> {
     await Promise.all(roleNames.map((name) => this.invalidateRoleCache(name)));
   }
 
-  findAll() {
-    return this.permissionRepo.find({ relations: ['roles'] });
-  }
-
-  findOne(id: string) {
-    return this.permissionRepo.findOne({
+  async findOne(id: string) {
+    const permission = await this.permissionRepo.findOne({
       where: { id },
       relations: ['roles'],
     });
+    if (!permission) {
+      throw new NotFoundException(`Permission #${id} not found`);
+    }
+    return permission;
   }
 
-  create(data: DeepPartial<Permission>) {
+  async create(data: DeepPartial<Permission>) {
+    if (data.key) {
+      const existing = await this.permissionRepo.findOne({
+        where: { key: data.key },
+      });
+      if (existing) {
+        throw new BadRequestException(
+          `Permission "${data.key}" already exists`,
+        );
+      }
+    }
     const permission = this.permissionRepo.create(data);
     return this.permissionRepo.save(permission);
   }
 
   async update(id: string, data: Partial<Permission>) {
+    if (!(await this.isPermissionExist(id))) {
+      throw new NotFoundException(`Permission #${id} not found`);
+    }
+
+    if (data.key) {
+      const existing = await this.permissionRepo.findOne({
+        where: { key: data.key },
+      });
+      if (existing && existing.id !== id) {
+        throw new BadRequestException(
+          `Permission "${data.key}" already exists`,
+        );
+      }
+    }
+
     await this.permissionRepo.update(id, data);
     return this.permissionRepo.findOne({ where: { id } });
   }
 
   async remove(id: string) {
-    const result = await this.permissionRepo.delete(id);
+    if (!(await this.isPermissionExist(id))) {
+      throw new NotFoundException(`Permission #${id} not found`);
+    }
+
+    const result = await this.permissionRepo.softDelete(id);
     return !!result.affected;
   }
 
@@ -150,5 +235,9 @@ export class PermissionService implements BaseService<Permission> {
       select: ['name'],
     });
     return roles.map((r) => r.name);
+  }
+
+  protected async isPermissionExist(id: string) {
+    return this.permissionRepo.exists({ where: { id } });
   }
 }
