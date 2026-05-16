@@ -290,7 +290,7 @@ export class BlogPostService {
 
   async getComments(postId: string): Promise<BlogPostComment[]> {
     return this.commentRepo.find({
-      where: { blogPostId: postId, isApproved: true },
+      where: { blogPostId: postId },
       relations: ['user', 'replies', 'replies.user'],
       order: { createdAt: 'DESC' },
     });
@@ -306,7 +306,6 @@ export class BlogPostService {
       userId,
       parentId: data.parentId || null,
       content: data.content,
-      isApproved: false,
     });
     return this.commentRepo.save(comment);
   }

@@ -45,9 +45,6 @@ export class BlogPostComment {
   @Column({ type: 'text' })
   content!: string;
 
-  @Column({ name: 'is_approved', default: false })
-  isApproved!: boolean;
-
   @DeleteDateColumn({ name: 'deleted_at', nullable: true })
   @Exclude({ toPlainOnly: true })
   deletedAt!: Date | null;
