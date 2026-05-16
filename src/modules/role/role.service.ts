@@ -4,21 +4,56 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, FindOptionsWhere, FindOptionsOrder } from 'typeorm';
 import { Role } from './entities/role.entity';
 import { Permission } from '@modules/permission/entities/permission.entity';
 import { PermissionService } from '@modules/permission/permission.service';
+import { RoleQueryDto } from './dto/role-query.dto';
+import {
+  PaginatedResponse,
+  ResponseMeta,
+} from '@common/interfaces/response.interface';
+import { BaseService } from '@/common/interfaces/base-service.interface';
 
 @Injectable()
-export class RoleService {
+export class RoleService implements BaseService<Role> {
   constructor(
     @InjectRepository(Role)
     private roleRepo: Repository<Role>,
     private readonly permissionService: PermissionService,
   ) {}
 
-  findAll() {
-    return this.roleRepo.find({ relations: ['permissions'] });
+  async findAll(query: RoleQueryDto): Promise<PaginatedResponse<Role>> {
+    const { page, limit, name, sortBy, sortOrder } = query;
+
+    const where: FindOptionsWhere<Role> = {};
+
+    if (name) {
+      where.name = name;
+    }
+
+    const order: FindOptionsOrder<Role> = {};
+    if (sortBy) {
+      order[sortBy] = sortOrder ?? 'ASC';
+    }
+
+    const [results, total] = await this.roleRepo.findAndCount({
+      where,
+      order,
+      relations: ['permissions'],
+      take: limit,
+      skip: (page - 1) * limit,
+    });
+
+    const meta: ResponseMeta = {
+      totalItems: total,
+      itemCount: results.length,
+      itemsPerPage: limit,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+    };
+
+    return { results, meta };
   }
 
   async findOne(id: string) {
@@ -30,23 +65,51 @@ export class RoleService {
     return role;
   }
 
-  create(data: { name: string; description?: string }) {
+  async create(data: { name: string; description?: string }) {
+    const existing = await this.roleRepo.findOne({
+      where: { name: data.name },
+    });
+    if (existing) {
+      throw new BadRequestException(`Role "${data.name}" already exists`);
+    }
     const role = this.roleRepo.create(data);
     return this.roleRepo.save(role);
   }
 
   async update(id: string, data: Partial<Role>) {
-    const role = await this.findOne(id);
+    if (!(await this.isRoleExist(id))) {
+      throw new NotFoundException(`Role #${id} not found`);
+    }
+
+    if (data.name) {
+      const existing = await this.roleRepo.findOne({
+        where: { name: data.name },
+      });
+      if (existing && existing.id !== id) {
+        throw new BadRequestException(`Role "${data.name}" already exists`);
+      }
+    }
+
+    const oldRole = await this.findOne(id);
     await this.roleRepo.update(id, data);
 
-    // Invalidate cache if role name changed or permissions updated
-    await this.permissionService.invalidateRoleCache(role.name);
+    if (data.name && data.name !== oldRole.name) {
+      await this.permissionService.invalidateRoleCache(oldRole.name);
+      await this.permissionService.invalidateRoleCache(data.name);
+    }
 
     return this.roleRepo.findOne({ where: { id } });
   }
 
   async remove(id: string) {
-    const result = await this.roleRepo.delete(id);
+    if (!(await this.isRoleExist(id))) {
+      throw new NotFoundException(`Role #${id} not found`);
+    }
+
+    const role = await this.findOne(id);
+    await this.permissionService.invalidateRoleCache(role.name);
+
+    const result = await this.roleRepo.softDelete(id);
     return !!result.affected;
   }
 
@@ -66,9 +129,12 @@ export class RoleService {
 
     role.permissions = permissions;
 
-    // Invalidate cache when permissions change
     await this.permissionService.invalidateRoleCache(role.name);
 
     return this.roleRepo.save(role);
+  }
+
+  protected async isRoleExist(id: string) {
+    return this.roleRepo.exists({ where: { id } });
   }
 }
