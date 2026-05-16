@@ -110,7 +110,7 @@ export class PetImageService {
       imageMimeType: mimeType,
     });
 
-    const imageUrl = await this.storageService.uploadFile(
+    const { url: imageUrl, key: s3Key } = await this.storageService.uploadFile(
       file.buffer,
       mimeType,
       {
@@ -125,19 +125,20 @@ export class PetImageService {
     const image = this.imageRepo.create({
       petId,
       imageUrl,
+      s3Key,
       embedding,
       isPrimary,
     });
     return this.imageRepo.save(image);
   }
 
-  async createFromUrl(petId: string, imageUrl: string): Promise<PetImage> {
+  async createFromUrl(petId: string, externalUrl: string): Promise<PetImage> {
     if (!(await this.isPetExist(petId))) {
       throw new NotFoundException(`Pet #${petId} does not exist`);
     }
 
-    this.logger.log(`Fetching image from URL: ${imageUrl}`);
-    const image = await this.fetchImageAsBase64(imageUrl);
+    this.logger.log(`Fetching image from URL: ${externalUrl}`);
+    const image = await this.fetchImageAsBase64(externalUrl);
 
     const embedding = await this.embeddingService.embed({
       imageBase64: image.data,
@@ -145,17 +146,22 @@ export class PetImageService {
     });
 
     const buffer = Buffer.from(image.data, 'base64');
-    const s3Url = await this.storageService.uploadFile(buffer, image.mimeType, {
-      folder: 'pet-images',
-      fileName: `${petId}/${Date.now()}`,
-    });
+    const { url: imageUrl, key: s3Key } = await this.storageService.uploadFile(
+      buffer,
+      image.mimeType,
+      {
+        folder: 'pet-images',
+        fileName: `${petId}/${Date.now()}`,
+      },
+    );
 
     const existingImages = await this.imageRepo.count({ where: { petId } });
     const isPrimary = existingImages === 0;
 
     const imageEntity = this.imageRepo.create({
       petId,
-      imageUrl: s3Url,
+      imageUrl,
+      s3Key,
       embedding,
       isPrimary,
     });
@@ -189,7 +195,11 @@ export class PetImageService {
       throw new NotFoundException(`Pet #${image.petId} does not exist`);
     }
 
-    await this.storageService.deleteFile(image.imageUrl);
+    if (image.s3Key) {
+      await this.storageService.deleteFile(image.s3Key);
+    } else {
+      await this.storageService.deleteFileWithUrl(image.imageUrl);
+    }
     const result = await this.imageRepo.delete(id);
     return !!result.affected;
   }

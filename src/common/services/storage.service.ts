@@ -48,7 +48,7 @@ export class StorageService implements IStorageService {
     buffer: Buffer,
     mimeType: string,
     options: UploadOptions,
-  ): Promise<string> {
+  ): Promise<{ url: string; key: string }> {
     const ext = this.getExtension(mimeType);
     const fileName = options.fileName
       ? `${options.fileName}.${ext}`
@@ -67,16 +67,10 @@ export class StorageService implements IStorageService {
 
     const url = `${this.publicUrl.replace(/\/$/, '')}/${key}`;
     this.logger.log(`Uploaded file: ${url}`);
-    return url;
+    return { url, key };
   }
 
-  async deleteFile(url: string): Promise<void> {
-    const key = this.extractKey(url);
-    if (!key) {
-      this.logger.warn(`Could not extract key from URL: ${url}`);
-      return;
-    }
-
+  async deleteFile(key: string): Promise<void> {
     await this.s3Client.send(
       new DeleteObjectCommand({
         Bucket: this.bucketName,
@@ -84,6 +78,15 @@ export class StorageService implements IStorageService {
       }),
     );
     this.logger.log(`Deleted file: ${key}`);
+  }
+
+  async deleteFileWithUrl(url: string): Promise<void> {
+    const key = this.extractKey(url);
+    if (!key) {
+      this.logger.warn(`Could not extract key from URL: ${url}`);
+      return;
+    }
+    await this.deleteFile(key);
   }
 
   private getExtension(mimeType: string): string {
@@ -99,8 +102,8 @@ export class StorageService implements IStorageService {
 
   private extractKey(url: string): string | null {
     try {
-      const urlObj = new URL(url);
-      return urlObj.pathname.replace(/^\//, '');
+      const key = url.replace(this.publicUrl, '').replace(/^\//, '');
+      return key || null;
     } catch {
       return null;
     }

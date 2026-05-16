@@ -81,7 +81,7 @@ export class BlogPostService {
       const buffer = Buffer.from(base64Data, 'base64');
 
       try {
-        const url = await this.storageService.uploadFile(buffer, mimeType, {
+        const { url } = await this.storageService.uploadFile(buffer, mimeType, {
           folder: 'blog-images',
           fileName: `${postId}-${Date.now()}`,
         });
@@ -258,7 +258,7 @@ export class BlogPostService {
     const post = await this.postRepo.findOne({ where: { id } });
     if (!post) return null;
 
-    const url = await this.storageService.uploadFile(
+    const { url } = await this.storageService.uploadFile(
       file.buffer,
       file.mimetype,
       {
@@ -275,7 +275,7 @@ export class BlogPostService {
     const post = await this.postRepo.findOne({ where: { id } });
     if (!post || !post.featuredImageUrl) return false;
 
-    await this.storageService.deleteFile(post.featuredImageUrl);
+    await this.storageService.deleteFileWithUrl(post.featuredImageUrl);
     await this.postRepo.update(id, { featuredImageUrl: null });
     return true;
   }

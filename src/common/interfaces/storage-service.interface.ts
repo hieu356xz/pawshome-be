@@ -5,11 +5,17 @@ export interface UploadOptions {
   fileName?: string;
 }
 
+export interface UploadResult {
+  url: string;
+  key: string;
+}
+
 export interface IStorageService {
   uploadFile(
     buffer: Buffer,
     mimeType: string,
     options: UploadOptions,
-  ): Promise<string>;
-  deleteFile(url: string): Promise<void>;
+  ): Promise<UploadResult>;
+  deleteFile(key: string): Promise<void>;
+  deleteFileWithUrl(url: string): Promise<void>;
 }

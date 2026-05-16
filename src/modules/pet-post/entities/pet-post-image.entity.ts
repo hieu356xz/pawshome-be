@@ -24,6 +24,9 @@ export class PetPostImage {
   @Column({ name: 'image_url' })
   imageUrl!: string;
 
+  @Column({ name: 's3_key', nullable: true })
+  s3Key?: string;
+
   @Exclude({ toPlainOnly: true })
   @Column({ type: 'vector', length: 1536, nullable: true })
   embedding!: number[] | null;

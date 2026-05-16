@@ -125,7 +125,7 @@ export class PetPostService implements BaseService {
       imageMimeType: mimeType,
     });
 
-    const imageUrl = await this.storageService.uploadFile(
+    const { url: imageUrl, key: s3Key } = await this.storageService.uploadFile(
       file.buffer,
       mimeType,
       {
@@ -137,6 +137,7 @@ export class PetPostService implements BaseService {
     const image = this.imageRepo.create({
       postId,
       imageUrl,
+      s3Key,
       embedding,
     });
     return this.imageRepo.save(image);
@@ -149,7 +150,11 @@ export class PetPostService implements BaseService {
   async deleteImage(id: string): Promise<boolean> {
     const image = await this.imageRepo.findOne({ where: { id } });
     if (image) {
-      await this.storageService.deleteFile(image.imageUrl);
+      if (image.s3Key) {
+        await this.storageService.deleteFile(image.s3Key);
+      } else {
+        await this.storageService.deleteFileWithUrl(image.imageUrl);
+      }
     }
     const result = await this.imageRepo.delete(id);
     return !!result.affected;
