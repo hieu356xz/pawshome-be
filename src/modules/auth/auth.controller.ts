@@ -61,20 +61,30 @@ export class AuthController {
     // user return from google
     const googleUser = req.user as unknown as GoogleUser;
 
-    const result = await this.authService.googleAuth(googleUser, response);
+    try {
+      const result = await this.authService.googleAuth(googleUser, response);
 
-    // Redirect to frontend with tokens
-    const frontendUrl =
-      this.configService.get<string>('FRONTEND_URL') ||
-      'http://localhost:5173/auth/callback';
-    const redirectUrl = new URL(frontendUrl);
-    redirectUrl.searchParams.set('access_token', result.tokens.accessToken);
-    redirectUrl.searchParams.set(
-      'expires_in',
-      result.tokens.expiresIn.toString(),
-    );
+      // Redirect to frontend with tokens
+      const frontendUrl =
+        this.configService.get<string>('FRONTEND_URL') ||
+        'http://localhost:5173/auth/callback';
+      const redirectUrl = new URL(frontendUrl);
+      redirectUrl.searchParams.set('access_token', result.tokens.accessToken);
+      redirectUrl.searchParams.set(
+        'expires_in',
+        result.tokens.expiresIn.toString(),
+      );
 
-    response.redirect(redirectUrl.toString());
+      return response.redirect(redirectUrl.toString());
+    } catch (error) {
+      const frontendLoginUrl =
+        this.configService.get<string>('FRONTEND_LOGIN_URL') ||
+        'http://localhost:3000/login';
+      const redirectUrl = new URL(frontendLoginUrl);
+      redirectUrl.searchParams.set('error', error.message);
+
+      return response.redirect(redirectUrl.toString());
+    }
   }
 
   @Public()
