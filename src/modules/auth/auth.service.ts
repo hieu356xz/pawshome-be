@@ -14,13 +14,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { TokenPayload } from './interfaces/user-payload.interface';
 import { TokenResponseDto, AuthResponseDto } from './dto/token-response.dto';
-
-interface GoogleUser {
-  googleId: string;
-  email: string;
-  fullName: string;
-  avatarUrl: string | null;
-}
+import { GoogleUser } from './interfaces/google-user.interface';
 
 interface TokenPair {
   accessToken: string;

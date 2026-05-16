@@ -10,7 +10,6 @@ import { ModuleRef, Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import { PolicyService } from '@modules/permission/policy.service';
 import { PermissionKey } from '@/modules/permission/enums/permission-key.enum';
-import { UserPayload } from '@modules/auth/interfaces/user-payload.interface';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 import {
   BaseService,
@@ -36,7 +35,7 @@ export class PolicyGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<Request>();
-    const user = request.user as UserPayload;
+    const user = request.user;
 
     if (!user) {
       throw new UnauthorizedException('User not authenticated');
@@ -47,14 +46,15 @@ export class PolicyGuard implements CanActivate {
       const params = request.params as Record<string, string>;
       const resourceIdParam = params?.id;
 
-      const resource: Record<string, unknown> = {};
+      let resource: Record<string, unknown> = {};
 
-      if (resourceIdParam) {
+      if (request.resources) {
+        resource = request.resources;
+      } else if (resourceIdParam) {
         const loaded = await this.loadResource(resourceType, resourceIdParam);
-        if (!loaded) {
-          throw new ForbiddenException('Resource not found');
+        if (loaded) {
+          resource = loaded as Record<string, unknown>;
         }
-        Object.assign(resource, loaded);
       }
 
       const result = await this.policyService.checkAccess(requiredPerm, {
