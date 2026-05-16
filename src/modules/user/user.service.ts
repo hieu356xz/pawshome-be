@@ -117,6 +117,12 @@ export class UserService implements BaseService<User> {
     });
   }
 
+  async findRoleByName(name: string) {
+    return this.userRepo.manager.findOne(Role, {
+      where: { name },
+    });
+  }
+
   async findByGoogleId(googleId: string) {
     return this.userRepo.findOne({
       where: { googleId },

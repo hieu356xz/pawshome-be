@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
 import { UserService } from '@modules/user/user.service';
 import { User } from '@modules/user/entities/user.entity';
+import { Role } from '@modules/role/entities/role.entity';
 import { UserStatus } from '@modules/user/enums/user-status.enum';
 import { PasswordResetService } from '@modules/password-reset/password-reset.service';
 import { LoginDto } from './dto/login.dto';
@@ -40,11 +41,13 @@ export class AuthService {
       throw new ConflictException('Email already exists');
     }
 
+    const memberRole = await this.userService.findRoleByName('member');
     const user = await this.userService.create({
       email: dto.email,
       password: dto.password,
       fullName: dto.fullName,
       status: UserStatus.ACTIVE,
+      roles: memberRole ? [memberRole] : [],
     });
 
     const tokens = await this.generateTokenPair(user);
@@ -104,6 +107,7 @@ export class AuthService {
     let user = await this.userService.findByEmail(googleUser.email);
 
     if (!user) {
+      const memberRole = await this.userService.findRoleByName('member');
       // Create new user from Google
       user = await this.userService.create({
         email: googleUser.email,
@@ -111,6 +115,7 @@ export class AuthService {
         avatarUrl: googleUser.avatarUrl || undefined,
         googleId: googleUser.googleId,
         status: UserStatus.ACTIVE,
+        roles: memberRole ? [memberRole] : [],
       });
     } else {
       // Update existing user with Google info if not set
