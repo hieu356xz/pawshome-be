@@ -13,7 +13,6 @@ import { AdoptionRequestService } from './adoption-request.service';
 import { CreateAdoptionRequestDto } from './dto/create-adoption-request.dto';
 import { ReviewAdoptionRequestDto } from './dto/review-adoption-request.dto';
 import { IdParamDto } from '@/common/dto/id-param.dto';
-import { Public } from '@/common/decorators/public.decorator';
 import { RequirePermissions } from '@/common/decorators/require-permissions.decorator';
 import { PolicyGuard } from '@/common/guards/policy.guard';
 import { EntityExistGuard } from '@/common/guards/entity-exist.guard';
@@ -28,7 +27,6 @@ import type { UserPayload } from '@modules/auth/interfaces/user-payload.interfac
 export class AdoptionRequestController {
   constructor(private readonly service: AdoptionRequestService) {}
 
-  @Public()
   @Get()
   @UseGuards(
     EntityExistGuard(Pet, {
@@ -37,7 +35,9 @@ export class AdoptionRequestController {
       dto: PetIdParamDto,
       dbField: 'id',
     }),
+    PolicyGuard,
   )
+  @RequirePermissions('adoption-request:read')
   findAll(
     @Param('petId') petId: string,
     @Query() query: AdoptionRequestQueryDto,
@@ -45,8 +45,16 @@ export class AdoptionRequestController {
     return this.service.findAll({ ...query, petId });
   }
 
-  @Public()
   @Get(':id')
+  @UseGuards(
+    EntityExistGuard(AdoptionRequest, {
+      source: 'params',
+      sourceField: 'id',
+      dto: IdParamDto,
+    }),
+    PolicyGuard,
+  )
+  @RequirePermissions('adoption-request:read')
   findOne(@Param() { id }: IdParamDto) {
     return this.service.findOne(id);
   }
@@ -114,7 +122,7 @@ export class AdoptionRequestAdminController {
   }
 
   @Get('my-requests')
-  @RequirePermissions('adoption-request:list')
+  @RequirePermissions('adoption-request:read')
   findMyRequests(@CurrentUser() user: UserPayload) {
     return this.service.findByUserId(user.userId);
   }
