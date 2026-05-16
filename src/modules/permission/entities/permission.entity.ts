@@ -22,6 +22,9 @@ export class Permission {
   @Column()
   description!: string;
 
+  @Column({ default: true })
+  assignable!: boolean;
+
   @ManyToMany(() => Role, (role) => role.permissions)
   roles!: Role[];
 

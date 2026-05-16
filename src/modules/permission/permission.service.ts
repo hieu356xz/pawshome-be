@@ -37,6 +37,7 @@ export class PermissionService implements BaseService<Permission> {
           .createQueryBuilder('permission')
           .innerJoin('permission.roles', 'role')
           .where('role.name = :roleName', { roleName })
+          .andWhere('permission.assignable = :assignable', { assignable: true })
           .select('permission.key', 'key')
           .getRawMany<{ key: PermissionKey }>();
 

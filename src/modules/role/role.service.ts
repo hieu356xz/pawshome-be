@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Role } from './entities/role.entity';
@@ -51,6 +55,15 @@ export class RoleService {
     const permissions = await this.roleRepo.manager.find(Permission, {
       where: { id: In(permissionIds) },
     });
+
+    const nonAssignable = permissions.filter((p) => !p.assignable);
+    if (nonAssignable.length > 0) {
+      const keys = nonAssignable.map((p) => p.key).join(', ');
+      throw new BadRequestException(
+        `Cannot assign non-assignable permissions: ${keys}`,
+      );
+    }
+
     role.permissions = permissions;
 
     // Invalidate cache when permissions change
