@@ -12,6 +12,7 @@ import { Species } from '@modules/species/entities/species.entity';
 import { Breed } from '@modules/breed/entities/breed.entity';
 import { PetImage } from '@modules/pet-image/entities/pet-image.entity';
 import { MedicalRecord } from '@modules/medical-record/entities/medical-record.entity';
+import { AdoptionRequest } from '@modules/adoption-request/entities/adoption-request.entity';
 import { PetGender } from '../enums/pet-gender.enum';
 import { PetAgeGroup } from '../enums/pet-age-group.enum';
 import { AdoptionStatus } from '../enums/adoption-status.enum';
@@ -81,4 +82,7 @@ export class Pet {
 
   @OneToMany(() => MedicalRecord, (record) => record.pet)
   medicalRecords!: MedicalRecord[];
+
+  @OneToMany(() => AdoptionRequest, (request) => request.pet)
+  adoptionRequests!: AdoptionRequest[];
 }

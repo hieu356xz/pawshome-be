@@ -8,6 +8,7 @@ export const RESOURCES = [
   'breed',
   'pet-image',
   'medical-record',
+  'adoption-request',
 ] as const;
 
 export type Resource = (typeof RESOURCES)[number];
