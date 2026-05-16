@@ -27,6 +27,7 @@ export class RoleController {
   constructor(private readonly service: RoleService) {}
 
   @Get()
+  @UseGuards(PolicyGuard)
   @RequirePermissions('role:list')
   findAll(@Query() query: RoleQueryDto) {
     return this.service.findAll(query);
@@ -39,6 +40,7 @@ export class RoleController {
       sourceField: 'id',
       dto: IdParamDto,
     }),
+    PolicyGuard,
   )
   @RequirePermissions('role:read')
   findOne(@Param() { id }: IdParamDto) {
@@ -46,6 +48,7 @@ export class RoleController {
   }
 
   @Post()
+  @UseGuards(PolicyGuard)
   @RequirePermissions('role:create')
   create(@Body() data: CreateRoleDto) {
     return this.service.create(data);
@@ -58,6 +61,7 @@ export class RoleController {
       sourceField: 'id',
       dto: IdParamDto,
     }),
+    PolicyGuard,
   )
   @RequirePermissions('role:update')
   update(@Param() { id }: IdParamDto, @Body() data: UpdateRoleDto) {
@@ -71,6 +75,7 @@ export class RoleController {
       sourceField: 'id',
       dto: IdParamDto,
     }),
+    PolicyGuard,
   )
   @RequirePermissions('role:delete')
   remove(@Param() { id }: IdParamDto) {
@@ -92,6 +97,7 @@ export class RoleController {
       key: 'permission',
       allowMultiple: true,
     }),
+    PolicyGuard,
   )
   @RequirePermissions('permission:assign')
   assignPermissions(

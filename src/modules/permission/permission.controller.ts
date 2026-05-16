@@ -25,6 +25,7 @@ export class PermissionController {
   constructor(private readonly service: PermissionService) {}
 
   @Get()
+  @UseGuards(PolicyGuard)
   @RequirePermissions('permission:list')
   findAll(@Query() query: PermissionQueryDto) {
     return this.service.findAll(query);
@@ -37,6 +38,7 @@ export class PermissionController {
       sourceField: 'id',
       dto: IdParamDto,
     }),
+    PolicyGuard,
   )
   @RequirePermissions('permission:read')
   findOne(@Param() { id }: IdParamDto) {
@@ -44,6 +46,7 @@ export class PermissionController {
   }
 
   @Post()
+  @UseGuards(PolicyGuard)
   @RequirePermissions('permission:create')
   create(@Body() data: CreatePermissionDto) {
     return this.service.create(data);
@@ -56,6 +59,7 @@ export class PermissionController {
       sourceField: 'id',
       dto: IdParamDto,
     }),
+    PolicyGuard,
   )
   @RequirePermissions('permission:update')
   update(@Param() { id }: IdParamDto, @Body() data: UpdatePermissionDto) {
@@ -69,6 +73,7 @@ export class PermissionController {
       sourceField: 'id',
       dto: IdParamDto,
     }),
+    PolicyGuard,
   )
   @RequirePermissions('permission:delete')
   remove(@Param() { id }: IdParamDto) {
