@@ -2,9 +2,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinTable,
+  ManyToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Role } from '@modules/role/entities/role.entity';
 import { UserStatus } from '../enums/user-status.enum';
 
 @Entity('users')
@@ -45,6 +48,14 @@ export class User {
 
   @Column({ name: 'google_id', nullable: true, unique: true })
   googleId!: string;
+
+  @ManyToMany(() => Role)
+  @JoinTable({
+    name: 'user_roles',
+    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
+  })
+  roles!: Role[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
