@@ -93,6 +93,59 @@ export class UserPermissionsSeed implements Seeder {
       );
     }
 
+    const rolePermissionMap: Record<string, PermissionKey[]> = {
+      admin: [
+        'user:create',
+        'user:read',
+        'user:update',
+        'user:delete',
+        'user:list',
+      ],
+      manager: [
+        'user:create',
+        'user:read',
+        'user:update',
+        'user:delete',
+        'user:list',
+      ],
+      staff: ['user:read', 'user:list'],
+      veterinarian: ['user:read', 'user:update'],
+      member: ['user:read', 'user:update'],
+      volunteer: ['user:read', 'user:update'],
+    };
+
+    for (const [roleName, permKeys] of Object.entries(rolePermissionMap)) {
+      const role = roleMap.get(roleName)!;
+      const existingRole = await roleRepo.findOne({
+        where: { id: role.id },
+        relations: ['permissions'],
+      });
+
+      const existingKeys = new Set(
+        existingRole?.permissions?.map((p) => p.key) ?? [],
+      );
+
+      const newPerms = permKeys
+        .filter((key) => !existingKeys.has(key))
+        .map((key) => permMap.get(key)!)
+        .filter(Boolean);
+
+      if (newPerms.length > 0) {
+        existingRole!.permissions = [
+          ...(existingRole?.permissions ?? []),
+          ...newPerms,
+        ];
+        await roleRepo.save(existingRole!);
+        console.log(
+          `[UserPermissionsSeed] Assigned permissions to ${roleName}: ${newPerms.map((p) => p.key).join(', ')}`,
+        );
+      } else {
+        console.log(
+          `[UserPermissionsSeed] ${roleName} already has all permissions, skipping`,
+        );
+      }
+    }
+
     const policies: Partial<Policy>[] = [
       {
         roleId: roleMap.get('admin')!.id,

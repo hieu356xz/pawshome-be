@@ -74,6 +74,74 @@ export class RolePermissionsSeed implements Seeder {
       );
     }
 
+    const rolePermissionMap: Record<string, PermissionKey[]> = {
+      admin: [
+        'role:read',
+        'role:list',
+        'role:create',
+        'role:update',
+        'role:delete',
+        'role:assign',
+        'permission:read',
+        'permission:list',
+        'permission:create',
+        'permission:update',
+        'permission:delete',
+        'permission:assign',
+      ],
+      manager: [
+        'role:read',
+        'role:list',
+        'role:assign',
+        'permission:read',
+        'permission:list',
+      ],
+      staff: [
+        'role:read',
+        'role:list',
+        'role:assign',
+        'permission:read',
+        'permission:list',
+      ],
+      veterinarian: [],
+      volunteer: [],
+      member: [],
+    };
+
+    for (const [roleName, permKeys] of Object.entries(rolePermissionMap)) {
+      if (permKeys.length === 0) continue;
+
+      const role = roleMap.get(roleName)!;
+      const existingRole = await roleRepo.findOne({
+        where: { id: role.id },
+        relations: ['permissions'],
+      });
+
+      const existingKeys = new Set(
+        existingRole?.permissions?.map((p) => p.key) ?? [],
+      );
+
+      const newPerms = permKeys
+        .filter((key) => !existingKeys.has(key))
+        .map((key) => permMap.get(key)!)
+        .filter(Boolean);
+
+      if (newPerms.length > 0) {
+        existingRole!.permissions = [
+          ...(existingRole?.permissions ?? []),
+          ...newPerms,
+        ];
+        await roleRepo.save(existingRole!);
+        console.log(
+          `[RolePermissionsSeed] Assigned permissions to ${roleName}: ${newPerms.map((p) => p.key).join(', ')}`,
+        );
+      } else {
+        console.log(
+          `[RolePermissionsSeed] ${roleName} already has all permissions, skipping`,
+        );
+      }
+    }
+
     const staffAndMagagerCommonPermission: PermissionKey[] = [
       'role:read',
       'role:list',
