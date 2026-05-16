@@ -4,13 +4,14 @@ import { Repository, In } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import type { DeepPartial } from 'typeorm';
+import { BaseService } from '@/common/interfaces/base-service.interface';
 import { Permission } from './entities/permission.entity';
 import { Role } from '../role/entities/role.entity';
 import { PolicyService } from './policy.service';
 import type { PolicyEvaluationContext } from './interfaces/policy-condition.interface';
 
 @Injectable()
-export class PermissionService {
+export class PermissionService implements BaseService<Permission> {
   private readonly CACHE_TTL = 600000; // 10 minutes
 
   constructor(

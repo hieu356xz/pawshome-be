@@ -5,6 +5,8 @@ import { Permission } from './entities/permission.entity';
 import { PermissionController } from './permission.controller';
 import { PermissionService } from './permission.service';
 import { PolicyModule } from './policy.module';
+import { PolicyGuard } from '../../common/guards/policy.guard';
+import { SERVICE_SUFFIX } from '@/common/interfaces/base-service.interface';
 
 @Module({
   imports: [
@@ -13,7 +15,13 @@ import { PolicyModule } from './policy.module';
     forwardRef(() => PolicyModule),
   ],
   controllers: [PermissionController],
-  providers: [PermissionService],
-  exports: [PermissionService, PolicyModule],
+  providers: [
+    {
+      provide: `PERMISSION_${SERVICE_SUFFIX}`,
+      useClass: PermissionService,
+    },
+    PolicyGuard,
+  ],
+  exports: [PermissionService, PolicyModule, PolicyGuard],
 })
 export class PermissionModule {}

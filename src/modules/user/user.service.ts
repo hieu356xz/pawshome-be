@@ -8,6 +8,7 @@ import {
   Like,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { BaseService } from '@/common/interfaces/base-service.interface';
 import { User } from './entities/user.entity';
 import { Role } from '@modules/role/entities/role.entity';
 import { UserQueryDto } from './dto/user-query.dto';
@@ -17,7 +18,7 @@ import {
 } from '@common/interfaces/response.interface';
 
 @Injectable()
-export class UserService {
+export class UserService implements BaseService<User> {
   constructor(
     @InjectRepository(User)
     private userRepo: Repository<User>,
