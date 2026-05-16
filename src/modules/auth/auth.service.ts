@@ -148,7 +148,7 @@ export class AuthService {
   async refreshTokens(
     refreshToken: string | undefined,
     response: Response,
-  ): Promise<TokenResponseDto> {
+  ): Promise<AuthResponseDto> {
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token required');
     }
@@ -178,9 +178,12 @@ export class AuthService {
       this.setRefreshTokenCookie(response, tokens.refreshToken);
 
       return {
-        accessToken: tokens.accessToken,
-        expiresIn: tokens.expiresIn,
-        tokenType: 'Bearer',
+        user: this.mapUserToResponse(user),
+        tokens: {
+          accessToken: tokens.accessToken,
+          expiresIn: tokens.expiresIn,
+          tokenType: 'Bearer',
+        },
       };
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
@@ -287,11 +290,12 @@ export class AuthService {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'strict' : 'lax',
-      maxAge: parseInt(
-        this.configService.getOrThrow<string>('JWT_REFRESH_EXPIRES_IN'),
-        10,
-      ),
-      path: '/auth/refresh',
+      maxAge:
+        parseInt(
+          this.configService.getOrThrow<string>('JWT_REFRESH_EXPIRES_IN'),
+          10,
+        ) * 1000,
+      path: '/',
     });
   }
 
@@ -303,7 +307,7 @@ export class AuthService {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'strict' : 'lax',
-      path: '/auth/refresh',
+      path: '/',
     });
   }
 
