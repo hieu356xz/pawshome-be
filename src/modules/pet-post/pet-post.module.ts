@@ -12,6 +12,7 @@ import { PetPostImage } from './entities/pet-post-image.entity';
 import { PetPostComment } from './entities/pet-post-comment.entity';
 import { EmbeddingModule } from '@modules/embedding/embedding.module';
 import { SERVICE_SUFFIX } from '@/common/interfaces/base-service.interface';
+import { StorageService } from '@common/services/storage.service';
 
 const PETPOST_SERVICE = `PETPOST_${SERVICE_SUFFIX}`;
 
@@ -28,6 +29,7 @@ const PETPOST_SERVICE = `PETPOST_${SERVICE_SUFFIX}`;
   ],
   providers: [
     PetPostService,
+    StorageService,
     {
       provide: PETPOST_SERVICE,
       useExisting: PetPostService,

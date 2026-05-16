@@ -82,7 +82,7 @@ export class BlogPostService {
 
       try {
         const url = await this.storageService.uploadFile(buffer, mimeType, {
-          folder: 'blog',
+          folder: 'blog-images',
           fileName: `${postId}-${Date.now()}`,
         });
         $(img).attr('src', url);

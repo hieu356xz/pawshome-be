@@ -17,6 +17,8 @@ import {
 import { PetImageQueryDto } from './dto/pet-image-query.dto';
 import { PetImageResponseDto } from './dto/pet-image-response.dto';
 import { PetService } from '../pet/pet.service';
+import { StorageService } from '@common/services/storage.service';
+import { IMAGE_MIME_TYPES } from '@/common/constants/file.constants';
 
 export interface Base64Image {
   mimeType: string;
@@ -33,6 +35,7 @@ export class PetImageService {
     @Inject(forwardRef(() => PetService))
     private petService: PetService,
     private embeddingService: EmbeddingService,
+    private storageService: StorageService,
   ) {}
 
   private async isPetExist(id: string): Promise<boolean> {
@@ -94,25 +97,34 @@ export class PetImageService {
     return image;
   }
 
-  async create(
-    petId: string,
-    base64: string,
-    mimeType: string,
-  ): Promise<PetImage> {
+  async create(petId: string, file: Express.Multer.File): Promise<PetImage> {
     if (!(await this.isPetExist(petId))) {
       throw new NotFoundException(`Pet #${petId} does not exist`);
     }
+
+    const base64 = file.buffer.toString('base64');
+    const mimeType = file.mimetype;
 
     const embedding = await this.embeddingService.embed({
       imageBase64: base64,
       imageMimeType: mimeType,
     });
 
+    const imageUrl = await this.storageService.uploadFile(
+      file.buffer,
+      mimeType,
+      {
+        folder: 'pet-images',
+        fileName: `${petId}/${Date.now()}`,
+      },
+    );
+
     const existingImages = await this.imageRepo.count({ where: { petId } });
     const isPrimary = existingImages === 0;
 
     const image = this.imageRepo.create({
       petId,
+      imageUrl,
       embedding,
       isPrimary,
     });
@@ -126,9 +138,16 @@ export class PetImageService {
 
     this.logger.log(`Fetching image from URL: ${imageUrl}`);
     const image = await this.fetchImageAsBase64(imageUrl);
+
     const embedding = await this.embeddingService.embed({
       imageBase64: image.data,
       imageMimeType: image.mimeType,
+    });
+
+    const buffer = Buffer.from(image.data, 'base64');
+    const s3Url = await this.storageService.uploadFile(buffer, image.mimeType, {
+      folder: 'pet-images',
+      fileName: `${petId}/${Date.now()}`,
     });
 
     const existingImages = await this.imageRepo.count({ where: { petId } });
@@ -136,7 +155,7 @@ export class PetImageService {
 
     const imageEntity = this.imageRepo.create({
       petId,
-      imageUrl,
+      imageUrl: s3Url,
       embedding,
       isPrimary,
     });
@@ -170,6 +189,7 @@ export class PetImageService {
       throw new NotFoundException(`Pet #${image.petId} does not exist`);
     }
 
+    await this.storageService.deleteFile(image.imageUrl);
     const result = await this.imageRepo.delete(id);
     return !!result.affected;
   }
@@ -279,13 +299,11 @@ export class PetImageService {
     const buffer = Buffer.from(arrayBuffer);
 
     const contentType = response.headers.get('content-type') ?? 'image/jpeg';
-    const mimeTypeMap: Record<string, string> = {
-      'image/jpeg': 'image/jpeg',
-      'image/jpg': 'image/jpeg',
-      'image/png': 'image/png',
-      'image/webp': 'image/webp',
-    };
-    const mimeType = mimeTypeMap[contentType] ?? 'image/jpeg';
+    const mimeType = IMAGE_MIME_TYPES.includes(
+      contentType as (typeof IMAGE_MIME_TYPES)[number],
+    )
+      ? contentType
+      : 'image/jpeg';
 
     return {
       mimeType,

@@ -10,7 +10,6 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
-  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PetService } from './pet.service';
@@ -24,6 +23,7 @@ import { RequirePermissions } from '@/common/decorators/require-permissions.deco
 import { PolicyGuard } from '@/common/guards/policy.guard';
 import { EntityExistGuard } from '@/common/guards/entity-exist.guard';
 import { Pet } from './entities/pet.entity';
+import { FILE_INTERCEPTOR_OPTIONS } from '@/common/constants/file.constants';
 
 @Controller('pets')
 export class PetController {
@@ -31,25 +31,7 @@ export class PetController {
 
   @Public()
   @Post('search')
-  @UseInterceptors(
-    FileInterceptor('image', {
-      limits: {
-        fileSize: 10 * 1024 * 1024,
-        files: 1,
-      },
-      fileFilter: (_req, file, callback) => {
-        const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
-        if (allowedMimes.includes(file.mimetype)) {
-          callback(null, true);
-        } else {
-          callback(
-            new BadRequestException('Only image files are allowed'),
-            false,
-          );
-        }
-      },
-    }),
-  )
+  @UseInterceptors(FileInterceptor('image', FILE_INTERCEPTOR_OPTIONS))
   search(
     @UploadedFile() file: Express.Multer.File,
     @Body() query: PetSearchDto,

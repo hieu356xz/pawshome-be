@@ -9,7 +9,6 @@ import {
   Query,
   UseInterceptors,
   UploadedFile,
-  BadRequestException,
   UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -28,22 +27,7 @@ import type { UserPayload } from '@modules/auth/interfaces/user-payload.interfac
 import { PetPost } from './entities/pet-post.entity';
 import { PetPostComment } from './entities/pet-post-comment.entity';
 import { PostStatus } from './enums/post-status.enum';
-
-const FILE_INTERCEPTOR_OPTIONS = {
-  limits: { fileSize: 10 * 1024 * 1024, files: 1 },
-  fileFilter: (
-    _req: unknown,
-    file: { mimetype: string },
-    callback: (error: Error | null, acceptFile: boolean) => void,
-  ) => {
-    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (allowedMimes.includes(file.mimetype)) {
-      callback(null, true);
-    } else {
-      callback(new BadRequestException('Only image files are allowed'), false);
-    }
-  },
-};
+import { FILE_INTERCEPTOR_OPTIONS } from '@/common/constants/file.constants';
 
 @Controller('pet-posts')
 export class PetPostController {
@@ -143,8 +127,7 @@ export class PetPostImageController {
     @Param('postId') postId: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    const imageBase64 = file.buffer.toString('base64');
-    return this.service.addImage(postId, imageBase64, file.mimetype);
+    return this.service.addImage(postId, file);
   }
 
   @Delete(':id')
@@ -211,22 +194,7 @@ export class PetPostSearchController {
 
   @Public()
   @Post('image')
-  @UseInterceptors(
-    FileInterceptor('image', {
-      limits: { fileSize: 10 * 1024 * 1024, files: 1 },
-      fileFilter: (_req, file, callback) => {
-        const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
-        if (allowedMimes.includes(file.mimetype)) {
-          callback(null, true);
-        } else {
-          callback(
-            new BadRequestException('Only image files are allowed'),
-            false,
-          );
-        }
-      },
-    }),
-  )
+  @UseInterceptors(FileInterceptor('image', FILE_INTERCEPTOR_OPTIONS))
   async searchByImage(@UploadedFile() file: Express.Multer.File) {
     const imageBase64 = file.buffer.toString('base64');
     const images = await this.service.searchByImage(imageBase64, file.mimetype);

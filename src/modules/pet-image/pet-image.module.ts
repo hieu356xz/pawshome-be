@@ -10,6 +10,7 @@ import { EmbeddingModule } from '@modules/embedding/embedding.module';
 import { PetService } from '../pet/pet.service';
 import { PetModule } from '../pet/pet.module';
 import { SERVICE_SUFFIX } from '@/common/interfaces/base-service.interface';
+import { StorageService } from '@common/services/storage.service';
 
 const PETIMAGE_SERVICE = `PETIMAGE_${SERVICE_SUFFIX}`;
 
@@ -23,6 +24,7 @@ const PETIMAGE_SERVICE = `PETIMAGE_${SERVICE_SUFFIX}`;
   providers: [
     PetImageService,
     PetService,
+    StorageService,
     {
       provide: PETIMAGE_SERVICE,
       useExisting: PetImageService,

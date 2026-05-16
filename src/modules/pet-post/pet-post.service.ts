@@ -15,6 +15,7 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { PostStatus } from './enums/post-status.enum';
 import { BaseService } from '@/common/interfaces/base-service.interface';
+import { StorageService } from '@common/services/storage.service';
 
 @Injectable()
 export class PetPostService implements BaseService {
@@ -28,6 +29,7 @@ export class PetPostService implements BaseService {
     @InjectRepository(PetPostComment)
     private commentRepo: Repository<PetPostComment>,
     private embeddingService: EmbeddingService,
+    private storageService: StorageService,
   ) {}
 
   async findAll(query: PetPostQueryDto): Promise<PaginatedResponse<PetPost>> {
@@ -108,21 +110,33 @@ export class PetPostService implements BaseService {
 
   async addImage(
     postId: string,
-    imageBase64: string,
-    mimeType: string,
+    file: Express.Multer.File,
   ): Promise<PetPostImage> {
     const existingImages = await this.imageRepo.count({ where: { postId } });
     if (existingImages >= 5) {
       throw new BadRequestException('Maximum 5 images per post');
     }
 
+    const base64 = file.buffer.toString('base64');
+    const mimeType = file.mimetype;
+
     const embedding = await this.embeddingService.embed({
-      imageBase64,
+      imageBase64: base64,
       imageMimeType: mimeType,
     });
 
+    const imageUrl = await this.storageService.uploadFile(
+      file.buffer,
+      mimeType,
+      {
+        folder: 'pet-posts',
+        fileName: `${postId}/${Date.now()}`,
+      },
+    );
+
     const image = this.imageRepo.create({
       postId,
+      imageUrl,
       embedding,
     });
     return this.imageRepo.save(image);
@@ -133,6 +147,10 @@ export class PetPostService implements BaseService {
   }
 
   async deleteImage(id: string): Promise<boolean> {
+    const image = await this.imageRepo.findOne({ where: { id } });
+    if (image) {
+      await this.storageService.deleteFile(image.imageUrl);
+    }
     const result = await this.imageRepo.delete(id);
     return !!result.affected;
   }

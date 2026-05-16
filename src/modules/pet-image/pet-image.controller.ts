@@ -8,19 +8,15 @@ import {
   Query,
   UseInterceptors,
   UploadedFile,
-  BadRequestException,
   UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PetImageService } from './pet-image.service';
 import {
-  CreatePetImageDto,
-  CreatePetImageFromUrlDto,
-} from './dto/create-pet-image.dto';
-import {
   SearchImagesByTextDto,
   SearchImagesByImageAndTextDto,
 } from './dto/search-pet-image.dto';
+import { CreatePetImageFromUrlDto } from './dto/create-pet-image.dto';
 import { IdParamDto } from '@/common/dto/id-param.dto';
 import { Public } from '@/common/decorators/public.decorator';
 import { RequirePermissions } from '@/common/decorators/require-permissions.decorator';
@@ -30,6 +26,7 @@ import { Pet } from '@modules/pet/entities/pet.entity';
 import { PetImage } from './entities/pet-image.entity';
 import { PetImageQueryDto } from './dto/pet-image-query.dto';
 import { PetIdParamDto } from './dto/pet-id-param.dto';
+import { FILE_INTERCEPTOR_OPTIONS } from '@/common/constants/file.constants';
 
 @Controller('pets/:petId/images')
 export class PetImageController {
@@ -52,33 +49,33 @@ export class PetImageController {
   @Public()
   @Get(':id')
   @UseGuards(
-    EntityExistGuard(Pet, {
+    EntityExistGuard(PetImage, {
       source: 'params',
-      sourceField: 'petId',
-      dto: PetIdParamDto,
-      dbField: 'id',
+      sourceField: 'id',
+      dto: IdParamDto,
     }),
   )
   findOne(@Param() { id }: IdParamDto) {
     return this.service.findOne(id);
   }
 
-  @Post()
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('image', FILE_INTERCEPTOR_OPTIONS))
   @UseGuards(
-    EntityExistGuard(PetImage, {
+    EntityExistGuard(Pet, {
       source: 'params',
-      sourceField: 'id',
-      dto: IdParamDto,
+      sourceField: 'petId',
+      dto: PetIdParamDto,
+      dbField: 'id',
     }),
     PolicyGuard,
   )
   @RequirePermissions('pet-image:create')
-  async create(@Param('petId') petId: string, @Body() data: CreatePetImageDto) {
-    const image = await this.service.create(
-      petId,
-      data.imageBase64,
-      data.mimeType,
-    );
+  async create(
+    @Param('petId') petId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const image = await this.service.create(petId, file);
     return this.service.toResponseWithEmbedding(image);
   }
 
@@ -143,25 +140,7 @@ export class ImageSearchController {
   }
 
   @Post('search')
-  @UseInterceptors(
-    FileInterceptor('image', {
-      limits: {
-        fileSize: 10 * 1024 * 1024,
-        files: 1,
-      },
-      fileFilter: (_req, file, callback) => {
-        const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
-        if (allowedMimes.includes(file.mimetype)) {
-          callback(null, true);
-        } else {
-          callback(
-            new BadRequestException('Only image files are allowed'),
-            false,
-          );
-        }
-      },
-    }),
-  )
+  @UseInterceptors(FileInterceptor('image', FILE_INTERCEPTOR_OPTIONS))
   @RequirePermissions('pet-image:list')
   async searchByImageAndText(
     @UploadedFile() file: Express.Multer.File,
@@ -180,25 +159,7 @@ export class ImageSearchController {
   }
 
   @Post('search/similar')
-  @UseInterceptors(
-    FileInterceptor('image', {
-      limits: {
-        fileSize: 10 * 1024 * 1024,
-        files: 1,
-      },
-      fileFilter: (_req, file, callback) => {
-        const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
-        if (allowedMimes.includes(file.mimetype)) {
-          callback(null, true);
-        } else {
-          callback(
-            new BadRequestException('Only image files are allowed'),
-            false,
-          );
-        }
-      },
-    }),
-  )
+  @UseInterceptors(FileInterceptor('image', FILE_INTERCEPTOR_OPTIONS))
   @RequirePermissions('pet-image:list')
   async searchSimilarImages(@UploadedFile() file: Express.Multer.File) {
     const base64 = file.buffer.toString('base64');

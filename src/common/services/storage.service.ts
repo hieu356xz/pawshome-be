@@ -88,7 +88,8 @@ export class StorageService implements IStorageService {
 
   private getExtension(mimeType: string): string {
     const map: Record<string, string> = {
-      'image/jpeg': 'jpg',
+      'image/jpeg': 'jpeg',
+      'image/jpg': 'jpg',
       'image/png': 'png',
       'image/webp': 'webp',
       'image/gif': 'gif',
