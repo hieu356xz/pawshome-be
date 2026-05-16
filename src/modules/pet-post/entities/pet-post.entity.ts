@@ -4,6 +4,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   DeleteDateColumn,
@@ -11,7 +12,8 @@ import {
 import { User } from '@modules/user/entities/user.entity';
 import { PostType } from '../enums/post-type.enum';
 import { PostStatus } from '../enums/post-status.enum';
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude, Expose, Type } from 'class-transformer';
+import { PetPostImage } from './pet-post-image.entity';
 
 @Entity('pet_posts')
 export class PetPost {
@@ -51,6 +53,10 @@ export class PetPost {
     default: PostStatus.ACTIVE,
   })
   postStatus!: PostStatus;
+
+  @OneToMany(() => PetPostImage, (image) => image.post)
+  @Type(() => PetPostImage)
+  images?: PetPostImage[];
 
   @DeleteDateColumn({ name: 'deleted_at', nullable: true })
   @Exclude({ toPlainOnly: true })

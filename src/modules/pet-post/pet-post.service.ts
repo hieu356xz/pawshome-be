@@ -74,7 +74,7 @@ export class PetPostService implements BaseService {
     }
 
     queryBuilder
-      .orderBy('post.createdAt', 'DESC')
+      .leftJoinAndSelect('post.images', 'images')
       .take(limit)
       .skip((page - 1) * limit);
 
@@ -92,7 +92,10 @@ export class PetPostService implements BaseService {
   }
 
   async findOne(id: string): Promise<PetPost | null> {
-    return this.postRepo.findOne({ where: { id } });
+    return this.postRepo.findOne({
+      where: { id },
+      relations: ['images'],
+    });
   }
 
   async create(userId: string, data: CreatePetPostDto): Promise<PetPost> {

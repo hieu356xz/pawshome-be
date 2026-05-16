@@ -17,6 +17,7 @@ export class PetPostImage {
   @Column({ name: 'post_id' })
   postId!: string;
 
+  @Exclude({ toPlainOnly: true })
   @ManyToOne(() => PetPost, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'post_id' })
   post!: PetPost;
