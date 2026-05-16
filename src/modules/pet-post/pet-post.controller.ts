@@ -16,6 +16,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { PetPostService } from './pet-post.service';
 import { CreatePetPostDto, UpdatePetPostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 import { PetPostQueryDto } from './dto/post-query.dto';
 import { IdParamDto } from '@/common/dto/id-param.dto';
 import { Public } from '@/common/decorators/public.decorator';
@@ -27,6 +28,22 @@ import type { UserPayload } from '@modules/auth/interfaces/user-payload.interfac
 import { PetPost } from './entities/pet-post.entity';
 import { PetPostComment } from './entities/pet-post-comment.entity';
 import { PostStatus } from './enums/post-status.enum';
+
+const FILE_INTERCEPTOR_OPTIONS = {
+  limits: { fileSize: 10 * 1024 * 1024, files: 1 },
+  fileFilter: (
+    _req: unknown,
+    file: { mimetype: string },
+    callback: (error: Error | null, acceptFile: boolean) => void,
+  ) => {
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (allowedMimes.includes(file.mimetype)) {
+      callback(null, true);
+    } else {
+      callback(new BadRequestException('Only image files are allowed'), false);
+    }
+  },
+};
 
 @Controller('pet-posts')
 export class PetPostController {
@@ -119,22 +136,7 @@ export class PetPostImageController {
   }
 
   @Post()
-  @UseInterceptors(
-    FileInterceptor('image', {
-      limits: { fileSize: 10 * 1024 * 1024, files: 1 },
-      fileFilter: (_req, file, callback) => {
-        const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
-        if (allowedMimes.includes(file.mimetype)) {
-          callback(null, true);
-        } else {
-          callback(
-            new BadRequestException('Only image files are allowed'),
-            false,
-          );
-        }
-      },
-    }),
-  )
+  @UseInterceptors(FileInterceptor('image', FILE_INTERCEPTOR_OPTIONS))
   @UseGuards(PolicyGuard)
   @RequirePermissions('pet-post:create')
   async uploadImage(
@@ -172,6 +174,20 @@ export class PetPostCommentController {
     @Body() data: CreateCommentDto,
   ) {
     return this.service.addComment(postId, user.userId, data);
+  }
+
+  @Put(':id')
+  @UseGuards(
+    EntityExistGuard(PetPostComment, {
+      source: 'params',
+      sourceField: 'id',
+      dto: IdParamDto,
+    }),
+    PolicyGuard,
+  )
+  @RequirePermissions('pet-post-comment:update')
+  update(@Param() { id }: IdParamDto, @Body() data: UpdateCommentDto) {
+    return this.service.updateComment(id, data);
   }
 
   @Delete(':id')

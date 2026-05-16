@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, FindOptionsOrder, ILike } from 'typeorm';
+import { Repository, FindOptionsWhere, ILike } from 'typeorm';
 import { PetPost } from './entities/pet-post.entity';
 import { PetPostImage } from './entities/pet-post-image.entity';
 import { PetPostComment } from './entities/pet-post-comment.entity';
@@ -12,6 +12,7 @@ import {
 import { PetPostQueryDto } from './dto/post-query.dto';
 import { CreatePetPostDto, UpdatePetPostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 import { PostStatus } from './enums/post-status.enum';
 import { BaseService } from '@/common/interfaces/base-service.interface';
 
@@ -37,34 +38,40 @@ export class PetPostService implements BaseService {
     if (postStatus) where.postStatus = postStatus;
     if (location) where.location = ILike(`%${location}%`);
 
-    const order: FindOptionsOrder<PetPost> = { createdAt: 'DESC' };
+    const queryBuilder = this.postRepo.createQueryBuilder('post');
 
-    const [results, total] = await this.postRepo.findAndCount({
-      where,
-      order,
-      take: limit,
-      skip: (page - 1) * limit,
-    });
+    if (postType)
+      queryBuilder.andWhere('post.postType = :postType', { postType });
+    if (postStatus)
+      queryBuilder.andWhere('post.postStatus = :postStatus', { postStatus });
+    if (location)
+      queryBuilder.andWhere('post.location ILIKE :location', {
+        location: `%${location}%`,
+      });
 
-    let filteredResults = results;
     if (search) {
-      const searchLower = search.toLowerCase();
-      filteredResults = results.filter(
-        (post) =>
-          post.title.toLowerCase().includes(searchLower) ||
-          (post.description?.toLowerCase().includes(searchLower) ?? false),
+      queryBuilder.andWhere(
+        '(post.title ILIKE :search OR post.description ILIKE :search)',
+        { search: `%${search}%` },
       );
     }
 
+    queryBuilder
+      .orderBy('post.createdAt', 'DESC')
+      .take(limit)
+      .skip((page - 1) * limit);
+
+    const [results, total] = await queryBuilder.getManyAndCount();
+
     const meta: ResponseMeta = {
       totalItems: total,
-      itemCount: filteredResults.length,
+      itemCount: results.length,
       itemsPerPage: limit,
       totalPages: Math.ceil(total / limit),
       currentPage: page,
     };
 
-    return { results: filteredResults, meta };
+    return { results, meta };
   }
 
   async findOne(id: string): Promise<PetPost | null> {
@@ -94,11 +101,8 @@ export class PetPostService implements BaseService {
     return this.findOne(id);
   }
 
-  async remove(id: string, userId: string): Promise<boolean> {
-    await this.postRepo.update(id, {
-      deletedAt: new Date(),
-      deletedBy: userId,
-    });
+  async remove(id: string, deletedBy: string): Promise<boolean> {
+    await this.postRepo.update(id, { deletedAt: new Date(), deletedBy });
     return true;
   }
 
@@ -154,12 +158,17 @@ export class PetPostService implements BaseService {
     return this.commentRepo.save(comment);
   }
 
-  async deleteComment(id: string, userId: string): Promise<boolean> {
-    await this.commentRepo.update(id, {
-      deletedAt: new Date(),
-      deletedBy: userId,
-    });
+  async deleteComment(id: string, deletedBy: string): Promise<boolean> {
+    await this.commentRepo.update(id, { deletedAt: new Date(), deletedBy });
     return true;
+  }
+
+  async updateComment(
+    id: string,
+    data: UpdateCommentDto,
+  ): Promise<PetPostComment | null> {
+    await this.commentRepo.update(id, { comment: data.comment });
+    return this.commentRepo.findOne({ where: { id } });
   }
 
   async searchByImage(
