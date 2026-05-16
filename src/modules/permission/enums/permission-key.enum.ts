@@ -4,6 +4,8 @@ export const RESOURCES = [
   'permission',
   'policy',
   'pet',
+  'species',
+  'breed',
 ] as const;
 
 export type Resource = (typeof RESOURCES)[number];
