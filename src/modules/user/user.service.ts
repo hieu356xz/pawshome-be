@@ -85,6 +85,20 @@ export class UserService {
     });
   }
 
+  async findByGoogleId(googleId: string) {
+    return this.userRepo.findOne({
+      where: { googleId },
+      relations: ['roles', 'roles.permissions'],
+    });
+  }
+
+  async validatePassword(
+    plainPassword: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
+    return bcrypt.compare(plainPassword, hashedPassword);
+  }
+
   async create(data: Partial<User>) {
     if (data.password) {
       data.password = await this.hashPassword(data.password);

@@ -4,6 +4,7 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { UserModule } from '@modules/user/user.module';
 import { RoleModule } from './modules/role/role.module';
 import { PermissionModule } from './modules/permission/permission.module';
+import { AuthModule } from './modules/auth/auth.module';
 import databaseConfig from './config/database.config';
 
 @Module({
@@ -16,6 +17,7 @@ import databaseConfig from './config/database.config';
     UserModule,
     RoleModule,
     PermissionModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],
