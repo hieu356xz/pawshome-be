@@ -27,6 +27,7 @@ type CreatePetData = {
   weight?: number | null;
   description?: string | null;
   intakeDate: string | Date;
+  petCode?: string;
 };
 
 type UpdatePetData = {
@@ -40,6 +41,7 @@ type UpdatePetData = {
   adoptionStatus?: AdoptionStatus;
   description?: string | null;
   intakeDate?: string | Date;
+  petCode?: string;
 };
 
 @Injectable()
@@ -53,6 +55,7 @@ export class PetService {
     const {
       page,
       limit,
+      petCode,
       speciesId,
       breedId,
       gender,
@@ -65,6 +68,9 @@ export class PetService {
 
     const where: FindOptionsWhere<Pet> = {};
 
+    if (petCode) {
+      where.petCode = petCode;
+    }
     if (speciesId) {
       where.speciesId = speciesId;
     }
@@ -119,6 +125,16 @@ export class PetService {
     return pet;
   }
 
+  async findOneByPetCode(petCode: string): Promise<Pet | null> {
+    const pet = await this.petRepo.findOne({
+      where: { petCode },
+      relations: ['species', 'breed'],
+    });
+    if (!pet)
+      throw new NotFoundException(`Pet with code "${petCode}" not found`);
+    return pet;
+  }
+
   async create(data: CreatePetData): Promise<Pet> {
     const speciesRepo = this.petRepo.manager.getRepository(Species);
     const speciesExists = await speciesRepo.exists({
@@ -138,12 +154,33 @@ export class PetService {
       }
     }
 
+    const petCode = data.petCode ?? (await this.generatePetCode());
+
     const petData = {
       ...data,
+      petCode,
       intakeDate: new Date(data.intakeDate),
     };
     const pet = this.petRepo.create(petData);
     return this.petRepo.save(pet);
+  }
+
+  async generatePetCode(): Promise<string> {
+    const lastPet = await this.petRepo.findOne({
+      order: { id: 'DESC' },
+      select: ['petCode'],
+    });
+
+    let nextNumber = 1;
+    if (lastPet?.petCode) {
+      const match = lastPet.petCode.match(/PSH-PET-(\d+)/);
+      if (match) {
+        nextNumber = parseInt(match[1], 10) + 1;
+      }
+    }
+
+    const paddedNumber = nextNumber.toString().padStart(4, '0');
+    return `PSH-PET-${paddedNumber}`;
   }
 
   async update(id: string, data: UpdatePetData): Promise<Pet | null> {

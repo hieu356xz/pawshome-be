@@ -40,4 +40,8 @@ export class CreatePetDto {
 
   @IsDateString()
   intakeDate!: string;
+
+  @IsOptional()
+  @IsString()
+  petCode?: string;
 }

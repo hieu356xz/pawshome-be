@@ -18,6 +18,9 @@ export class Pet {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Column({ name: 'pet_code', length: 20, unique: true })
+  petCode!: string;
+
   @Column({ length: 255 })
   name!: string;
 

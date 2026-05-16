@@ -48,4 +48,8 @@ export class UpdatePetDto {
   @IsOptional()
   @IsDateString()
   intakeDate?: string;
+
+  @IsOptional()
+  @IsString()
+  petCode?: string;
 }

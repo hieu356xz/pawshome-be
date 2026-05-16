@@ -8,6 +8,10 @@ import { AdoptionStatus } from '../enums/adoption-status.enum';
 
 export class PetQueryDto extends PaginationDto {
   @IsOptional()
+  @IsString()
+  petCode?: string;
+
+  @IsOptional()
   @IsNumber()
   speciesId?: number;
 
