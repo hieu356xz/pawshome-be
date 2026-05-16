@@ -77,11 +77,13 @@ export class AuthController {
 
       return response.redirect(redirectUrl.toString());
     } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Invalid credentials';
       const frontendLoginUrl =
         this.configService.get<string>('FRONTEND_LOGIN_URL') ||
         'http://localhost:3000/login';
       const redirectUrl = new URL(frontendLoginUrl);
-      redirectUrl.searchParams.set('error', error.message);
+      redirectUrl.searchParams.set('error', message);
 
       return response.redirect(redirectUrl.toString());
     }
