@@ -55,16 +55,12 @@ export class BlogPostController {
 
   @Public()
   @Get()
-  findAll(
-    @Query() query: BlogPostQueryDto,
-    @CurrentUser() user?: UserPayload,
-  ) {
+  findAll(@Query() query: BlogPostQueryDto, @CurrentUser() user?: UserPayload) {
     const isAdmin =
       user &&
       user.roles.some((role) => ['admin', 'manager', 'staff'].includes(role));
     return this.service.findAll(query, isAdmin);
   }
-
 
   @Public()
   @Get(':id')

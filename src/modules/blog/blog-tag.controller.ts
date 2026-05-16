@@ -40,7 +40,10 @@ export class BlogTagController {
 
   @Put(':id')
   @RequirePermissions('blog-tag:update')
-  update(@Param('id', ParseIntPipe) id: number, @Body() data: UpdateBlogTagDto) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() data: UpdateBlogTagDto,
+  ) {
     return this.service.update(id, data);
   }
 

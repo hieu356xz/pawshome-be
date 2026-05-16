@@ -83,7 +83,7 @@ export function EntityExistGuard<E extends object, D extends object>(
 
       const dbtInstance = plainToInstance(options.dto, {
         [options.sourceField]: rawValue,
-      }) as D;
+      });
 
       const errors = await validate(dbtInstance);
       const fieldErrors = errors.filter(
