@@ -113,10 +113,11 @@ export class UserService implements BaseService<User> {
     return user;
   }
 
-  async findByEmail(email: string) {
+  async findByEmail(email: string, withDeleted = false) {
     return this.userRepo.findOne({
       where: { email },
       relations: ['roles', 'roles.permissions'],
+      withDeleted,
     });
   }
 

@@ -62,10 +62,14 @@ export class AuthService {
   }
 
   async login(dto: LoginDto, response: Response): Promise<AuthResponseDto> {
-    const user = await this.userService.findByEmail(dto.email);
+    const user = await this.userService.findByEmail(dto.email, true);
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (user.deletedAt) {
+      throw new ForbiddenException('Account has been deleted');
     }
 
     if (!user.password) {
@@ -103,7 +107,7 @@ export class AuthService {
     googleUser: GoogleUser,
     response: Response,
   ): Promise<AuthResponseDto> {
-    let user = await this.userService.findByEmail(googleUser.email);
+    let user = await this.userService.findByEmail(googleUser.email, true);
 
     if (!user) {
       const memberRole = await this.userService.findRoleByName('member');
@@ -117,6 +121,10 @@ export class AuthService {
         roles: memberRole ? [memberRole] : [],
       });
     } else {
+      if (user.deletedAt) {
+        throw new ForbiddenException('Account has been deleted');
+      }
+
       // Update existing user with Google info if not set
       if (!user.googleId) {
         await this.userService.update(user.id, {
