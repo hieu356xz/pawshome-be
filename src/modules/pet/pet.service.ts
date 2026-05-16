@@ -167,6 +167,7 @@ export class PetService {
 
   async generatePetCode(): Promise<string> {
     const lastPet = await this.petRepo.findOne({
+      where: {},
       order: { id: 'DESC' },
       select: ['petCode'],
     });

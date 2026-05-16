@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { SpeciesModule } from './modules/species/species.module';
 import { BreedModule } from './modules/breed/breed.module';
 import { PetModule } from './modules/pet/pet.module';
+import { PetImageModule } from './modules/pet-image/pet-image.module';
 import databaseConfig from './config/database.config';
 
 @Module({
@@ -30,6 +31,7 @@ import databaseConfig from './config/database.config';
     SpeciesModule,
     BreedModule,
     PetModule,
+    PetImageModule,
   ],
   controllers: [],
   providers: [],
