@@ -114,7 +114,7 @@ export class RoleService implements BaseService<Role> {
     const role = await this.findOne(id);
     await this.permissionService.invalidateRoleCache(role.name);
 
-    const result = await this.roleRepo.softDelete(id);
+    const result = await this.roleRepo.delete(id);
     return !!result.affected;
   }
 

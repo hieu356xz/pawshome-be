@@ -227,7 +227,7 @@ export class PermissionService implements BaseService<Permission> {
       throw new NotFoundException(`Permission #${id} not found`);
     }
 
-    const result = await this.permissionRepo.softDelete(id);
+    const result = await this.permissionRepo.delete(id);
     return !!result.affected;
   }
 
