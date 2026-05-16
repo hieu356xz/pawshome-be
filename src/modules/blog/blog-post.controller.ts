@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  NotFoundException,
   UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -63,17 +64,11 @@ export class BlogPostController {
   }
 
   @Public()
-  @Get(':id')
-  @UseGuards(
-    EntityExistGuard(BlogPost, {
-      source: 'params',
-      sourceField: 'id',
-      dto: IdParamDto,
-      dbField: 'id',
-    }),
-  )
-  findOne(@Param() { id }: IdParamDto) {
-    return this.service.findOne(id);
+  @Get(':slug')
+  async findBySlug(@Param('slug') slug: string) {
+    const post = await this.service.findBySlug(slug);
+    if (!post) throw new NotFoundException('Post not found');
+    return post;
   }
 
   @Post()
