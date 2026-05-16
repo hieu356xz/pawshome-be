@@ -7,9 +7,9 @@ import {
   PrimaryColumn,
 } from 'typeorm';
 import { PolicyEffect } from '../enums/policy-effect.enum';
-import type { PolicyConditions } from '../interfaces/policy-condition.interface';
+import type { PolicyConditions } from '@modules/policy/interfaces/policy-condition.interface';
 import { Role } from '@modules/role/entities/role.entity';
-import { Permission } from './permission.entity';
+import { Permission } from '@modules/permission/entities/permission.entity';
 
 @Entity('policies')
 @Index(['roleId', 'permissionId'])

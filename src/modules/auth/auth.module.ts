@@ -9,7 +9,7 @@ import { GoogleStrategy } from './strategies/google.strategy';
 import { UserModule } from '@modules/user/user.module';
 import { PermissionModule } from '@modules/permission/permission.module';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { PermissionsGuard } from '../../common/guards/permissions.guard';
+import { PermissionsGuard } from '@common/guards/permissions.guard';
 import { APP_GUARD } from '@nestjs/core';
 
 @Module({

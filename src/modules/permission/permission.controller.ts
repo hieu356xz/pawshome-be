@@ -10,8 +10,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { PermissionService } from './permission.service';
-import { CreatePermissionDto } from './dto/create-permission.dto/create-permission.dto';
-import { UpdatePermissionDto } from './dto/update-permission.dto/update-permission.dto';
+import { CreatePermissionDto } from './dto/create-permission.dto';
+import { UpdatePermissionDto } from './dto/update-permission.dto';
 import { PermissionQueryDto } from './dto/permission-query.dto';
 import { RequirePermissions } from '@/common/decorators/require-permissions.decorator';
 import { IdParamDto } from '@/common/dto/id-param.dto';

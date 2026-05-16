@@ -11,7 +11,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { Policy } from './entities/policy.entity';
 import { Role } from '@modules/role/entities/role.entity';
-import { Permission } from './entities/permission.entity';
+import { Permission } from '../permission/entities/permission.entity';
 import { PolicyEffect } from './enums/policy-effect.enum';
 import { PolicyOperator } from './enums/policy-operator.enum';
 import type {
@@ -19,7 +19,7 @@ import type {
   PolicyRule,
   PolicyEvaluationContext,
 } from './interfaces/policy-condition.interface';
-import { PermissionKey } from './enums/permission-key.enum';
+import { PermissionKey } from '../permission/enums/permission-key.enum';
 import { PolicyQueryDto } from './dto/policy-query.dto';
 import type {
   PaginatedResponse,

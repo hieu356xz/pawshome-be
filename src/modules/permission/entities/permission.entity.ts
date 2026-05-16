@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import type { PermissionKey } from '../enums/permission-key.enum';
 import { Role } from '@modules/role/entities/role.entity';
-import { Policy } from './policy.entity';
+import { Policy } from '@modules/policy/entities/policy.entity';
 
 @Entity('permissions')
 export class Permission {

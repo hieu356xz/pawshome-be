@@ -18,9 +18,9 @@ import type { Cache } from 'cache-manager';
 import type { DeepPartial } from 'typeorm';
 import { BaseService } from '@/common/interfaces/base-service.interface';
 import { Permission } from './entities/permission.entity';
-import { Role } from '../role/entities/role.entity';
-import { PolicyService } from './policy.service';
-import type { PolicyEvaluationContext } from './interfaces/policy-condition.interface';
+import { Role } from '@modules/role/entities/role.entity';
+import { PolicyService } from '@modules/policy/policy.service';
+import type { PolicyEvaluationContext } from '@modules/policy/interfaces/policy-condition.interface';
 import { PermissionKey } from './enums/permission-key.enum';
 import { PermissionQueryDto } from './dto/permission-query.dto';
 import {

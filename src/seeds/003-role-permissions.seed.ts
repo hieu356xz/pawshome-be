@@ -1,11 +1,11 @@
 import { DataSource } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
-import { PolicyEffect } from '@modules/permission/enums/policy-effect.enum';
-import { Policy } from '@modules/permission/entities/policy.entity';
+import { PolicyEffect } from '@/modules/policy/enums/policy-effect.enum';
+import { Policy } from '@/modules/policy/entities/policy.entity';
 import { Role } from '@modules/role/entities/role.entity';
 import { Permission } from '@modules/permission/entities/permission.entity';
 import type { PermissionKey } from '@modules/permission/enums/permission-key.enum';
-import { PolicyOperator } from '@/modules/permission/enums/policy-operator.enum';
+import { PolicyOperator } from '@/modules/policy/enums/policy-operator.enum';
 
 export class RolePermissionsSeed implements Seeder {
   public async run(dataSource: DataSource): Promise<void> {

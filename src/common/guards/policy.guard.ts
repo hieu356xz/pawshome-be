@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ModuleRef, Reflector } from '@nestjs/core';
 import type { Request } from 'express';
-import { PolicyService } from '@modules/permission/policy.service';
+import { PolicyService } from '@/modules/policy/policy.service';
 import { PermissionKey } from '@/modules/permission/enums/permission-key.enum';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 import {

@@ -18,7 +18,7 @@ import { PolicyParamsDto } from './dto/policy-params.dto';
 import { PolicyGuard } from '@/common/guards/policy.guard';
 import { EntityExistGuard } from '@/common/guards/entity-exist.guard';
 import { Role } from '@modules/role/entities/role.entity';
-import { Permission } from './entities/permission.entity';
+import { Permission } from '@modules/permission/entities/permission.entity';
 
 @Controller('policy')
 @UseGuards(PolicyGuard)
