@@ -21,10 +21,10 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "*": ["./*"]
+      "@": ["./src"],
+      "@modules/*": ["./src/modules/*"],
+      "@common/*": ["./src/common/*"]
     },
-    "types": [
-      "jest"
-    ]
+    "types": ["node", "jest"]
   }
 }
