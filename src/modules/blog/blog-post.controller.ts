@@ -59,11 +59,6 @@ export class BlogPostController {
     return this.service.findAll(query);
   }
 
-  @Public()
-  @Get('tags')
-  getTags() {
-    return this.service.getTags();
-  }
 
   @Public()
   @Get(':id')

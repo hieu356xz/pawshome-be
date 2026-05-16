@@ -13,6 +13,7 @@ export const RESOURCES = [
   'pet-post-comment',
   'blog',
   'blog-comment',
+  'blog-tag',
 ] as const;
 
 export type Resource = (typeof RESOURCES)[number];

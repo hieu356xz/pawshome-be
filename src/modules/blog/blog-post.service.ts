@@ -1,12 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { S3ServiceException } from '@aws-sdk/client-s3';
 import * as cheerio from 'cheerio';
 import slugify from 'slugify';
 import { BlogPost } from './entities/blog-post.entity';
 import { BlogPostComment } from './entities/blog-post-comment.entity';
 import { Tag } from './entities/tag.entity';
+import { BlogTagService } from './blog-tag.service';
 import { StorageService } from '@common/services/storage.service';
 import {
   PaginatedResponse,
@@ -30,8 +31,7 @@ export class BlogPostService {
     private postRepo: Repository<BlogPost>,
     @InjectRepository(BlogPostComment)
     private commentRepo: Repository<BlogPostComment>,
-    @InjectRepository(Tag)
-    private tagRepo: Repository<Tag>,
+    private tagService: BlogTagService,
     private storageService: StorageService,
   ) {}
 
@@ -184,7 +184,7 @@ export class BlogPostService {
     const savedPost = await this.postRepo.save(post);
 
     if (data.tagIds?.length) {
-      const tags = await this.tagRepo.findBy({ id: In(data.tagIds) });
+      const tags = await this.tagService.findByIds(data.tagIds);
       savedPost.tags = tags;
       await this.postRepo.save(savedPost);
     }
@@ -244,7 +244,7 @@ export class BlogPostService {
     const post = await this.postRepo.findOne({ where: { id } });
     if (!post) return null;
 
-    const tags = await this.tagRepo.findBy({ id: In(tagIds) });
+    const tags = await this.tagService.findByIds(tagIds);
     post.tags = tags;
     await this.postRepo.save(post);
 
@@ -278,19 +278,6 @@ export class BlogPostService {
     await this.storageService.deleteFileWithUrl(post.featuredImageUrl);
     await this.postRepo.update(id, { featuredImageUrl: null });
     return true;
-  }
-
-  async getTags(): Promise<Tag[]> {
-    return this.tagRepo.find({ order: { name: 'ASC' } });
-  }
-
-  async createTag(name: string): Promise<Tag> {
-    const slug = this.slugify(name);
-    const existing = await this.tagRepo.findOne({ where: { slug } });
-    if (existing) return existing;
-
-    const tag = this.tagRepo.create({ name, slug });
-    return this.tagRepo.save(tag);
   }
 
   async getComments(postId: string): Promise<BlogPostComment[]> {
