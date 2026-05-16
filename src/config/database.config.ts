@@ -10,8 +10,8 @@ const databaseConfig = () => ({
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'pawshome',
-  entities: ['src/modules/**/entities/*.entity.{ts,js}'],
-  migrations: ['src/migrations/*.{ts,js}'],
+  entities: [__dirname + '/../**/entities/*.entity.{ts,js}'],
+  migrations: [__dirname + '/../migrations/*.{ts,js}'],
 });
 
 // for TypeORM CLI migrations
