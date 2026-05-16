@@ -6,15 +6,13 @@ import {
   UnauthorizedException,
   Logger,
 } from '@nestjs/common';
-import { ModuleRef, Reflector } from '@nestjs/core';
+import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import { PolicyService } from '@/modules/policy/policy.service';
 import { PermissionKey } from '@/modules/permission/enums/permission-key.enum';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
-import {
-  BaseService,
-  SERVICE_SUFFIX,
-} from '../interfaces/base-service.interface';
+import { DataSource, FindOptionsWhere } from 'typeorm';
+import { pascalCase } from 'pascal-case';
 
 type ResourceMap = Record<string, Record<string, unknown>>;
 
@@ -23,7 +21,7 @@ export class PolicyGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private policyService: PolicyService,
-    private moduleRef: ModuleRef,
+    private dataSource: DataSource,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -138,26 +136,18 @@ export class PolicyGuard implements CanActivate {
   }
 
   private async loadResource(type: string, id: string): Promise<unknown> {
-    // for example: '$resources.medical-record.userId' from a policy, where medical-record is the resource type will be converted into MEDICALRECORD + _SERVICE
-    // the service string must be defined in the module like this format 'MEDICALRECORD_SERVICE' for this method to works
-    const cleanType = type.replace(/[-_]/g, '').toUpperCase();
-    const serviceName = cleanType + '_' + SERVICE_SUFFIX;
+    // Example: '$resources.medical-record.userId' from a policy, where 'medical-record' is the resource type.
+    // This converts 'medical-record' → 'MedicalRecord' (pascalCase), then uses dataSource.getRepository('MedicalRecord').
+    // The entity must be registered with TypeORM and have an 'id' primary key column.
+    const cleanType = pascalCase(type);
 
     try {
-      const service = this.moduleRef.get<BaseService>(serviceName, {
-        strict: false,
+      const repository = this.dataSource.getRepository(cleanType);
+      return await repository.findOne({
+        where: { id } as FindOptionsWhere<unknown>,
       });
-
-      if (!service || typeof service.findOne !== 'function') {
-        return null;
-      }
-
-      return await service.findOne(id);
     } catch (error) {
-      Logger.log(
-        `Failed to get service ${serviceName} for resource type ${type}`,
-        error,
-      );
+      Logger.log(`Failed to get repository for resource type ${type}`, error);
       return null;
     }
   }
