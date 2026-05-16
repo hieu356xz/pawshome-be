@@ -96,16 +96,23 @@ export class BlogPostService {
     return $.html();
   }
 
-  async findAll(query: BlogPostQueryDto): Promise<PaginatedResponse<BlogPost>> {
-    const { page, limit, search, tagId } = query;
+  async findAll(
+    query: BlogPostQueryDto,
+    isAdmin = false,
+  ): Promise<PaginatedResponse<BlogPost>> {
+    const { page, limit, search, tagId, status } = query;
 
     const queryBuilder = this.postRepo
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.tags', 'tag');
 
-    queryBuilder.where('post.status = :status', {
-      status: BlogPostStatus.PUBLISHED,
-    });
+    if (!isAdmin) {
+      queryBuilder.where('post.status = :status', {
+        status: BlogPostStatus.PUBLISHED,
+      });
+    } else if (status) {
+      queryBuilder.where('post.status = :status', { status });
+    }
 
     if (search) {
       queryBuilder.andWhere(
