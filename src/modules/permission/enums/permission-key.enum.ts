@@ -11,6 +11,8 @@ export const RESOURCES = [
   'adoption-request',
   'pet-post',
   'pet-post-comment',
+  'blog',
+  'blog-comment',
 ] as const;
 
 export type Resource = (typeof RESOURCES)[number];
