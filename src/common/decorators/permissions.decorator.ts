@@ -1,5 +1,5 @@
-import { applyDecorators, SetMetadata, UseGuards } from '@nestjs/common';
-import { PermissionsGuard } from '../guards/permissions.guard';
+import { SetMetadata } from '@nestjs/common';
+import { PermissionKey } from '@/modules/permission/enums/permission-key.enum';
 
 export const PERMISSIONS_KEY = 'permissions';
 
@@ -11,15 +11,5 @@ export const PERMISSIONS_KEY = 'permissions';
  * @usage @Permissions('user:create', 'user:update')
  * @usage @Permissions('user:*')
  */
-export const Permissions = (...permissions: string[]) =>
+export const Permissions = (...permissions: PermissionKey[]) =>
   SetMetadata(PERMISSIONS_KEY, permissions);
-/**
- * A convenience decoratorthat marks a route with @Permissions and @PermissionsGuard
- * Multiple permissions are checked with OR logic (need at least one)
- * Supports wildcards like 'user:*' or '*'
- * @usage @RequiredPermissions('user:read')
- * @usage @RequiredPermissions('user:create', 'user:update')
- * @usage @RequiredPermissions('user:*')
- */
-export const RequiredPermissions = (...permissions: string[]) =>
-  applyDecorators(Permissions(...permissions), UseGuards(PermissionsGuard));
