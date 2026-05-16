@@ -5,6 +5,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -24,12 +25,12 @@ export class PetPostComment {
   @JoinColumn({ name: 'post_id' })
   post!: PetPost;
 
-  @Column({ name: 'user_id' })
-  userId!: string;
+  @Column({ name: 'user_id', nullable: true })
+  userId!: string | null;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'user_id' })
-  user!: User;
+  user!: User | null;
 
   @Column({ name: 'parent_id', nullable: true })
   parentId!: string | null;
@@ -37,6 +38,9 @@ export class PetPostComment {
   @ManyToOne(() => PetPostComment, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'parent_id' })
   parent!: PetPostComment | null;
+
+  @OneToMany(() => PetPostComment, (comment) => comment.parent)
+  replies!: PetPostComment[];
 
   @Column({ type: 'text' })
   comment!: string;
