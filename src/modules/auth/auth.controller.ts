@@ -14,8 +14,8 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
-import { Public } from '../../common/decorators/public.decorator';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '@common/decorators/public.decorator';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
 import type { UserPayload } from './interfaces/user-payload.interface';
 import { ConfigService } from '@nestjs/config';
 
