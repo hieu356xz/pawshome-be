@@ -20,9 +20,14 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
+    "typeorm-extension": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-extension/bin/cli.cjs",
     "migration:generate": "npm run typeorm -- -d src/config/database.config.ts migration:generate",
     "migration:run": "npm run typeorm -- -d src/config/database.config.ts migration:run",
-    "migration:revert": "npm run typeorm -- -d src/config/database.config.ts migration:revert"
+    "migration:revert": "npm run typeorm -- -d src/config/database.config.ts migration:revert",
+    "migration:create": "npm run typeorm -- migration:create",
+    "migration:show": "npm run typeorm -- -d src/config/database.config.ts migration:show",
+    "seed:run": "npm run typeorm-extension -- -d src/config/database.config.ts seed:run",
+    "seed:create": "npm run typeorm-extension -- seed:create --name"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^3.1.0",
@@ -44,7 +49,8 @@
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.28"
+    "typeorm": "^0.3.28",
+    "typeorm-extension": "^3.9.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

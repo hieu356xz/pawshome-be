@@ -1,4 +1,5 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
+import { SeederOptions } from 'typeorm-extension';
 import { config } from 'dotenv';
 
 config();
@@ -14,9 +15,15 @@ const databaseConfig = () => ({
   migrations: [__dirname + '/../migrations/*.{ts,js}'],
 });
 
+const seederConfig: SeederOptions = {
+  seeds: ['src/seeds/**/*.{ts,js}'],
+  factories: ['src/factories/**/*.{ts,js}'],
+};
+
 // for TypeORM CLI migrations
 export const AppDataSource = new DataSource({
   ...(databaseConfig() as DataSourceOptions),
+  ...seederConfig,
 });
 
 export default databaseConfig;

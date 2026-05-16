@@ -119,7 +119,7 @@ export class UserService implements BaseService<User> {
   }
 
   async remove(id: string) {
-    const result = await this.userRepo.delete(id);
+    const result = await this.userRepo.softDelete(id);
     return !!result.affected;
   }
 

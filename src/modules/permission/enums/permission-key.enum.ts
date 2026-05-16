@@ -2,7 +2,14 @@ export const RESOURCES = ['user', 'role', 'permission', 'pet'] as const;
 
 export type Resource = (typeof RESOURCES)[number];
 
-export const ACTIONS = ['create', 'read', 'update', 'delete', 'list'] as const;
+export const ACTIONS = [
+  'create',
+  'read',
+  'update',
+  'delete',
+  'list',
+  'assign',
+] as const;
 
 export type Action = (typeof ACTIONS)[number];
 
