@@ -57,7 +57,7 @@ export function EntityExistGuard<T extends object, D extends Partial<T>>(
       } as FindOptionsWhere<T>;
 
       const repo = this.dataSource.getRepository(entity);
-      const resource = await repo.findOne({
+      const resource = await repo.exists({
         where: query,
       });
 
@@ -67,7 +67,9 @@ export function EntityExistGuard<T extends object, D extends Partial<T>>(
             options.notFoundMessage(entity.name, paramKey),
           );
         }
-        throw new NotFoundException(`${entity.name} #${paramKey} not found`);
+        throw new NotFoundException(
+          `${entity.name} #${paramKey} does not exist`,
+        );
       }
 
       const entityKey = entity.name.toLowerCase();

@@ -75,11 +75,20 @@ export class UserService implements BaseService<User> {
       where: { id },
       relations: ['roles', 'roles.permissions'],
     });
-    if (!user) throw new NotFoundException(`User #${id} not found`);
+    if (!user) throw new NotFoundException(`User #${id} does not exist`);
     return user;
   }
 
   async findByEmail(email: string) {
+    const exist = await this.userRepo.exists({
+      where: {
+        email: email,
+      },
+    });
+
+    if (!exist)
+      throw new NotFoundException(`User with email ${email} does not exist`);
+
     return this.userRepo.findOne({
       where: { email },
       relations: ['roles', 'roles.permissions'],
@@ -87,6 +96,17 @@ export class UserService implements BaseService<User> {
   }
 
   async findByGoogleId(googleId: string) {
+    const exist = await this.userRepo.exists({
+      where: {
+        googleId: googleId,
+      },
+    });
+
+    if (!exist)
+      throw new NotFoundException(
+        `User with Google ID ${googleId} does not exist`,
+      );
+
     return this.userRepo.findOne({
       where: { googleId },
       relations: ['roles', 'roles.permissions'],
@@ -114,11 +134,19 @@ export class UserService implements BaseService<User> {
   }
 
   async update(id: string, data: Partial<User>) {
+    if (await this.isUserExist(id)) {
+      throw new NotFoundException(`User #${id} does not exist`);
+    }
+
     await this.userRepo.update(id, data);
     return this.userRepo.findOne({ where: { id } });
   }
 
   async remove(id: string) {
+    if (await this.isUserExist(id)) {
+      throw new NotFoundException(`User #${id} does not exist`);
+    }
+
     const result = await this.userRepo.softDelete(id);
     return !!result.affected;
   }
@@ -130,5 +158,9 @@ export class UserService implements BaseService<User> {
     });
     user.roles = roles;
     return this.userRepo.save(user);
+  }
+
+  protected async isUserExist(id: string) {
+    return this.userRepo.exists({ where: { id: id } });
   }
 }
