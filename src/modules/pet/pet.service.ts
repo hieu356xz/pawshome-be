@@ -39,6 +39,9 @@ type CreatePetData = {
   color: string;
   weight?: number | null;
   description?: string | null;
+  isVaccinated?: boolean;
+  isNeutered?: boolean;
+  healthSummary?: string | null;
   intakeDate: string | Date;
   petCode?: string;
 };
@@ -53,6 +56,9 @@ type UpdatePetData = {
   weight?: number | null;
   adoptionStatus?: AdoptionStatus;
   description?: string | null;
+  isVaccinated?: boolean;
+  isNeutered?: boolean;
+  healthSummary?: string | null;
   intakeDate?: string | Date;
   petCode?: string;
 };

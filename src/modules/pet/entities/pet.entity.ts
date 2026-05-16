@@ -68,6 +68,15 @@ export class Pet {
   @Column({ type: 'text', nullable: true })
   description!: string | null;
 
+  @Column({ name: 'is_vaccinated', type: 'boolean', default: false })
+  isVaccinated!: boolean;
+
+  @Column({ name: 'is_neutered', type: 'boolean', default: false })
+  isNeutered!: boolean;
+
+  @Column({ name: 'health_summary', type: 'text', nullable: true })
+  healthSummary!: string | null;
+
   @Column({ name: 'intake_date', type: 'date' })
   intakeDate!: Date;
 

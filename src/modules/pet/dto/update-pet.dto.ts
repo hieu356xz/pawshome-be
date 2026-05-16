@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsOptional,
   IsString,
   IsEnum,
@@ -44,6 +45,18 @@ export class UpdatePetDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isVaccinated?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isNeutered?: boolean;
+
+  @IsOptional()
+  @IsString()
+  healthSummary?: string;
 
   @IsOptional()
   @IsDateString()
