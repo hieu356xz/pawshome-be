@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PetImageService } from './pet-image.service';
 import {
@@ -7,11 +7,27 @@ import {
 } from './pet-image.controller';
 import { PetImage } from './entities/pet-image.entity';
 import { EmbeddingModule } from '@modules/embedding/embedding.module';
+import { PetService } from '../pet/pet.service';
+import { PetModule } from '../pet/pet.module';
+import { SERVICE_SUFFIX } from '@/common/interfaces/base-service.interface';
+
+const PETIMAGE_SERVICE = `PETIMAGE_${SERVICE_SUFFIX}`;
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PetImage]), EmbeddingModule],
+  imports: [
+    TypeOrmModule.forFeature([PetImage]),
+    EmbeddingModule,
+    forwardRef(() => PetModule),
+  ],
   controllers: [PetImageController, ImageSearchController],
-  providers: [PetImageService],
-  exports: [PetImageService],
+  providers: [
+    PetImageService,
+    PetService,
+    {
+      provide: PETIMAGE_SERVICE,
+      useExisting: PetImageService,
+    },
+  ],
+  exports: [PetImageService, PETIMAGE_SERVICE],
 })
 export class PetImageModule {}

@@ -1,14 +1,20 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Logger,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, FindOptionsOrder } from 'typeorm';
 import { PetImage } from './entities/pet-image.entity';
-import { Pet } from '@modules/pet/entities/pet.entity';
 import { EmbeddingService } from '@modules/embedding/embedding.service';
 import {
   PaginatedResponse,
   ResponseMeta,
 } from '@common/interfaces/response.interface';
 import { PetImageQueryDto } from './dto/pet-image-query.dto';
+import { PetService } from '../pet/pet.service';
 
 export interface Base64Image {
   mimeType: string;
@@ -22,13 +28,13 @@ export class PetImageService {
   constructor(
     @InjectRepository(PetImage)
     private imageRepo: Repository<PetImage>,
-    @InjectRepository(Pet)
-    private petRepo: Repository<Pet>,
+    @Inject(forwardRef(() => PetService))
+    private petService: PetService,
     private embeddingService: EmbeddingService,
   ) {}
 
   private async isPetExist(id: string): Promise<boolean> {
-    return this.petRepo.exists({ where: { id } });
+    return this.petService.isPetExist(id);
   }
 
   private async isPetImageExist(id: string): Promise<boolean> {

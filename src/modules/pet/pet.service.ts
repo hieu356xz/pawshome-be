@@ -227,7 +227,7 @@ export class PetService {
     return !!result.affected;
   }
 
-  protected async isPetExist(id: string) {
+  public async isPetExist(id: string) {
     return this.petRepo.exists({ where: { id } });
   }
 }
