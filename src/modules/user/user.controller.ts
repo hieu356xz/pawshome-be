@@ -19,48 +19,61 @@ import { IdParamDto } from '@/common/dto/id-param.dto';
 import { PolicyGuard } from '@/common/guards/policy.guard';
 import { EntityExistGuard } from '@/common/guards/entity-exist.guard';
 import { User } from './entities/user.entity';
+import { Role } from '@modules/role/entities/role.entity';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly service: UserService) {}
 
   @Get()
-  @RequirePermissions('user:list')
   @UseGuards(PolicyGuard)
+  @RequirePermissions('user:list')
   findAll(@Query() query: UserQueryDto) {
     return this.service.findAll(query);
   }
 
   @Get(':id')
-  @RequirePermissions('user:read')
   @UseGuards(
-    EntityExistGuard(User, { param: 'id', dto: IdParamDto }),
+    EntityExistGuard(User, {
+      source: 'params',
+      sourceField: 'id',
+      dto: IdParamDto,
+    }),
     PolicyGuard,
   )
+  @RequirePermissions('user:read')
   findOne(@Param() { id }: IdParamDto) {
     return this.service.findOne(id);
   }
 
   @Post()
-  @RequirePermissions('user:create')
   @UseGuards(PolicyGuard)
+  @RequirePermissions('user:create')
   create(@Body() data: CreateUserDto) {
     return this.service.create(data);
   }
 
   @Patch(':id')
-  @RequirePermissions('user:update')
   @UseGuards(
-    EntityExistGuard(User, { param: 'id', dto: IdParamDto }),
+    EntityExistGuard(User, {
+      source: 'params',
+      sourceField: 'id',
+      dto: IdParamDto,
+    }),
     PolicyGuard,
   )
+  @RequirePermissions('user:update')
   update(@Param() { id }: IdParamDto, @Body() data: UpdateUserDto) {
     return this.service.update(id, data);
   }
 
   @Delete(':id')
   @UseGuards(
-    EntityExistGuard(User, { param: 'id', dto: IdParamDto }),
+    EntityExistGuard(User, {
+      source: 'params',
+      sourceField: 'id',
+      dto: IdParamDto,
+    }),
     PolicyGuard,
   )
   @RequirePermissions('user:delete')
@@ -69,12 +82,23 @@ export class UserController {
   }
 
   @Post(':id/roles')
-  @RequirePermissions('user:update', 'role:assign')
   @UseGuards(
-    EntityExistGuard(User, { param: 'id', dto: IdParamDto }),
-    // TODO: need to support checking role ids in the body
+    EntityExistGuard(User, {
+      source: 'params',
+      sourceField: 'id',
+      dto: IdParamDto,
+    }),
+    EntityExistGuard(Role, {
+      source: 'body',
+      dto: AssignRolesDto,
+      sourceField: 'roleIds',
+      dbField: 'id',
+      key: 'role',
+      allowMultiple: true,
+    }),
     PolicyGuard,
   )
+  @RequirePermissions('role:assign')
   assignRoles(@Param() { id }: IdParamDto, @Body() data: AssignRolesDto) {
     return this.service.assignRoles(id, data.roleIds);
   }

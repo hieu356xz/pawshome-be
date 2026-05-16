@@ -16,6 +16,8 @@ import {
   SERVICE_SUFFIX,
 } from '../interfaces/base-service.interface';
 
+type ResourceMap = Record<string, Record<string, unknown>>;
+
 @Injectable()
 export class PolicyGuard implements CanActivate {
   constructor(
@@ -42,16 +44,18 @@ export class PolicyGuard implements CanActivate {
     }
 
     const userRoles = user.roles || [];
-    const resourceTypes =
+
+    const resources = request.resources || {};
+    const params = request.params as Record<string, string>;
+
+    const resourceTypesFromConditions =
       await this.policyService.extractResourceTypesFromConditions(
         requiredPermissions,
         userRoles,
       );
 
-    const resources = request.resources || {};
-    const params = request.params as Record<string, string>;
-
-    for (const resourceType of resourceTypes) {
+    // Preload resource fallback for param id
+    for (const resourceType of resourceTypesFromConditions) {
       if (!resources[resourceType]) {
         const resourceIdParam = params?.id;
         if (resourceIdParam) {
@@ -63,19 +67,74 @@ export class PolicyGuard implements CanActivate {
       }
     }
 
-    for (const requiredPerm of requiredPermissions) {
-      const result = await this.policyService.checkAccess(requiredPerm, {
-        user: { id: user.userId, roles: userRoles },
-        resources,
-        env: { time: new Date() },
-      });
+    // Get all resource types from resources
+    const allResourceTypes = Object.keys(resources);
 
-      if (!result.allowed) {
+    // Create cartesian product of all arrays
+    const combinations = this.createCartesianProduct(
+      resources,
+      allResourceTypes,
+    );
+
+    // Check each combination with all permissions
+    for (const combo of combinations) {
+      const results = await Promise.all(
+        requiredPermissions.map((perm) =>
+          this.policyService.checkAccess(perm, {
+            user: { id: user.userId, roles: userRoles },
+            resources: combo,
+            env: { time: new Date() },
+          }),
+        ),
+      );
+
+      const allAllowed = results.every((r) => r.allowed);
+      if (!allAllowed) {
         throw new ForbiddenException('Access denied by policy');
       }
     }
 
     return true;
+  }
+
+  private createCartesianProduct(
+    resources: Record<string, unknown>,
+    resourceTypes: string[],
+  ): ResourceMap[] {
+    const items: { type: string; items: unknown[] }[] = [];
+
+    for (const type of resourceTypes) {
+      const resource = resources[type];
+      if (Array.isArray(resource) && resource.length > 0) {
+        items.push({ type, items: resource });
+      } else if (resource && !Array.isArray(resource)) {
+        items.push({ type, items: [resource] });
+      }
+    }
+
+    if (items.length === 0) {
+      return [{}];
+    }
+
+    const combinations: ResourceMap[] = [{}];
+
+    for (const { type, items: arr } of items) {
+      const newCombinations: ResourceMap[] = [];
+
+      for (const combo of combinations) {
+        for (const item of arr) {
+          newCombinations.push({
+            ...combo,
+            [type]: item as Record<string, unknown>,
+          });
+        }
+      }
+
+      combinations.length = 0;
+      combinations.push(...newCombinations);
+    }
+
+    return combinations;
   }
 
   private async loadResource(type: string, id: string): Promise<unknown> {
