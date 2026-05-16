@@ -31,11 +31,11 @@ const ROLE_HIERARCHY: Record<string, number> = {
 };
 
 const getRoleLevel = (role: Role): number => {
-  return ROLE_HIERARCHY[role.name] ?? 0;
+  return ROLE_HIERARCHY[role.name] ?? 999;
 };
 
 const getHighestRoleLevel = (roles: Role[]): number => {
-  if (!roles.length) return 0;
+  if (!roles.length) return 999;
   return Math.min(...roles.map(getRoleLevel));
 };
 
