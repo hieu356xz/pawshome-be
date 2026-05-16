@@ -125,6 +125,8 @@ export class BlogPostService {
     }
 
     queryBuilder
+      .leftJoinAndSelect('post.tags', 'tags')
+      .leftJoinAndSelect('post.user', 'user')
       .orderBy('post.createdAt', 'DESC')
       .take(limit)
       .skip((page - 1) * limit);
@@ -145,7 +147,7 @@ export class BlogPostService {
   async findOne(id: string): Promise<BlogPost | null> {
     const post = await this.postRepo.findOne({
       where: { id },
-      relations: ['tags'],
+      relations: ['tags', 'user'],
     });
 
     if (post) {
@@ -158,7 +160,7 @@ export class BlogPostService {
   async findBySlug(slug: string): Promise<BlogPost | null> {
     const post = await this.postRepo.findOne({
       where: { slug, status: BlogPostStatus.PUBLISHED },
-      relations: ['tags'],
+      relations: ['tags', 'user'],
     });
 
     if (post) {
@@ -289,7 +291,7 @@ export class BlogPostService {
   async getComments(postId: string): Promise<BlogPostComment[]> {
     return this.commentRepo.find({
       where: { blogPostId: postId, isApproved: true },
-      relations: ['user', 'replies'],
+      relations: ['user', 'replies', 'replies.user'],
       order: { createdAt: 'DESC' },
     });
   }
