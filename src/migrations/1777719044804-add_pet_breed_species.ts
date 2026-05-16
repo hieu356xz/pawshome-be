@@ -23,9 +23,6 @@ export class AddPetBreedSpecies1777719044804 implements MigrationInterface {
       `CREATE TABLE "pets" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying(255) NOT NULL, "species_id" integer NOT NULL, "breed_id" integer, "gender" "public"."pets_gender_enum" NOT NULL, "age_group" "public"."pets_age_group_enum" NOT NULL, "color" character varying(100) NOT NULL, "weight" numeric(5,2), "adoption_status" "public"."pets_adoption_status_enum" NOT NULL, "description" text, "intake_date" date NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_d01e9e7b4ada753c826720bee8b" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `ALTER TABLE "policies" ADD "updated_at" TIMESTAMP NOT NULL DEFAULT now()`,
-    );
-    await queryRunner.query(
       `ALTER TABLE "breeds" ADD CONSTRAINT "FK_0ea3bf7a9569bb26556fb5a7fb2" FOREIGN KEY ("species_id") REFERENCES "species"("id") ON DELETE RESTRICT ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
@@ -46,7 +43,6 @@ export class AddPetBreedSpecies1777719044804 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "breeds" DROP CONSTRAINT "FK_0ea3bf7a9569bb26556fb5a7fb2"`,
     );
-    await queryRunner.query(`ALTER TABLE "policies" DROP COLUMN "updated_at"`);
     await queryRunner.query(`DROP TABLE "pets"`);
     await queryRunner.query(`DROP TYPE "public"."pets_adoption_status_enum"`);
     await queryRunner.query(`DROP TYPE "public"."pets_age_group_enum"`);
