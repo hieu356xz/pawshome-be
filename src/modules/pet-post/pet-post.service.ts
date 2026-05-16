@@ -191,7 +191,7 @@ export class PetPostService implements BaseService {
       postId,
       userId,
       parentId: data.parentId,
-      comment: data.comment,
+      content: data.content,
     });
     return this.commentRepo.save(comment);
   }
@@ -205,7 +205,7 @@ export class PetPostService implements BaseService {
     id: string,
     data: UpdateCommentDto,
   ): Promise<PetPostComment | null> {
-    await this.commentRepo.update(id, { comment: data.comment });
+    await this.commentRepo.update(id, { content: data.comment });
     return this.commentRepo.findOne({ where: { id } });
   }
 

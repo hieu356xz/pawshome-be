@@ -43,7 +43,7 @@ export class PetPostComment {
   replies!: PetPostComment[];
 
   @Column({ type: 'text' })
-  comment!: string;
+  content!: string;
 
   @DeleteDateColumn({ name: 'deleted_at', nullable: true })
   @Exclude({ toPlainOnly: true })
