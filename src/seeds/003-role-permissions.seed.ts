@@ -6,7 +6,6 @@ import { Role } from '@modules/role/entities/role.entity';
 import { Permission } from '@modules/permission/entities/permission.entity';
 import type { PermissionKey } from '@modules/permission/enums/permission-key.enum';
 import { PolicyOperator } from '@/modules/permission/enums/policy-operator.enum';
-import { PolicyRule } from '@/modules/permission/interfaces/policy-condition.interface';
 
 export class RolePermissionsSeed implements Seeder {
   public async run(dataSource: DataSource): Promise<void> {
@@ -82,57 +81,6 @@ export class RolePermissionsSeed implements Seeder {
       'permission:list',
     ];
 
-    const roleAssignPolicyConditions: PolicyRule[] = [
-      {
-        field: '$resources.role.id',
-        operator: PolicyOperator.EQUALS,
-        value: roleMap.get('veterinarian')!.id,
-      },
-      {
-        field: '$resources.role.id',
-        operator: PolicyOperator.EQUALS,
-        value: roleMap.get('volunteer')!.id,
-      },
-      {
-        field: '$resources.role.id',
-        operator: PolicyOperator.EQUALS,
-        value: roleMap.get('member')!.id,
-      },
-    ];
-
-    const staffPolicies: Partial<Policy>[] = [
-      {
-        roleId: roleMap.get('staff')!.id,
-        permissionId: permMap.get('role:assign')!.id,
-        effect: PolicyEffect.ALLOW,
-        priority: 50,
-        conditions: {
-          operator: 'OR',
-          rules: roleAssignPolicyConditions,
-        },
-      },
-    ];
-
-    const managerPolicies: Partial<Policy>[] = [
-      {
-        roleId: roleMap.get('manager')!.id,
-        permissionId: permMap.get('role:assign')!.id,
-        effect: PolicyEffect.ALLOW,
-        priority: 80,
-        conditions: {
-          operator: 'OR',
-          rules: [
-            {
-              field: '$resources.role.id',
-              operator: PolicyOperator.EQUALS,
-              value: roleMap.get('staff')!.id,
-            },
-            ...roleAssignPolicyConditions,
-          ],
-        },
-      },
-    ];
-
     const policies: Partial<Policy>[] = [
       ...staffAndMagagerCommonPermission.map((perm) => ({
         roleId: roleMap.get('manager')!.id,
@@ -146,8 +94,47 @@ export class RolePermissionsSeed implements Seeder {
         effect: PolicyEffect.ALLOW,
         priority: 50,
       })),
-      ...managerPolicies,
-      ...staffPolicies,
+      {
+        roleId: roleMap.get('manager')!.id,
+        permissionId: permMap.get('role:assign')!.id,
+        effect: PolicyEffect.ALLOW,
+        priority: 80,
+        conditions: {
+          operator: 'AND',
+          rules: [
+            {
+              field: '$resources.role.id',
+              operator: PolicyOperator.IN,
+              value: [
+                roleMap.get('staff')!.id,
+                roleMap.get('veterinarian')!.id,
+                roleMap.get('volunteer')!.id,
+                roleMap.get('member')!.id,
+              ],
+            },
+          ],
+        },
+      },
+      {
+        roleId: roleMap.get('staff')!.id,
+        permissionId: permMap.get('role:assign')!.id,
+        effect: PolicyEffect.ALLOW,
+        priority: 50,
+        conditions: {
+          operator: 'OR',
+          rules: [
+            {
+              field: '$resources.role.id',
+              operator: PolicyOperator.IN,
+              value: [
+                roleMap.get('veterinarian')!.id,
+                roleMap.get('volunteer')!.id,
+                roleMap.get('member')!.id,
+              ],
+            },
+          ],
+        },
+      },
     ];
 
     for (const policyData of policies) {
