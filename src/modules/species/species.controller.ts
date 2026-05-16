@@ -18,18 +18,19 @@ import { RequirePermissions } from '@/common/decorators/require-permissions.deco
 import { PolicyGuard } from '@/common/guards/policy.guard';
 import { EntityExistGuard } from '@/common/guards/entity-exist.guard';
 import { Species } from './entities/species.entity';
+import { Public } from '@/common/decorators/public.decorator';
 
 @Controller('species')
 export class SpeciesController {
   constructor(private readonly service: SpeciesService) {}
 
+  @Public()
   @Get()
-  @UseGuards(PolicyGuard)
-  @RequirePermissions('species:list')
   findAll(@Query() query: SpeciesQueryDto) {
     return this.service.findAll(query);
   }
 
+  @Public()
   @Get(':id')
   @UseGuards(
     EntityExistGuard(Species, {
@@ -39,7 +40,6 @@ export class SpeciesController {
     }),
     PolicyGuard,
   )
-  @RequirePermissions('species:read')
   findOne(@Param() { id }: NumberIdParamDto) {
     return this.service.findOne(id);
   }
