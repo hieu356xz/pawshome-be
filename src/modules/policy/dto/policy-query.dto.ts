@@ -2,6 +2,7 @@ import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { PaginationDto } from '@common/dto/pagination.dto';
 import { SortOrder } from '@common/enums/sort-order.enum';
 import { PolicyEffect } from '../enums/policy-effect.enum';
+import { ToUpperCase } from '@/common/decorators/to-uppercase.decorator';
 
 export class PolicyQueryDto extends PaginationDto {
   @IsOptional()
@@ -21,6 +22,7 @@ export class PolicyQueryDto extends PaginationDto {
   sortBy?: string;
 
   @IsOptional()
+  @ToUpperCase()
   @IsEnum(SortOrder)
   sortOrder?: SortOrder;
 }

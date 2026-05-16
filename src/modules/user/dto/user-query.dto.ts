@@ -2,7 +2,7 @@ import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PaginationDto } from '@common/dto/pagination.dto';
 import { UserStatus } from '../enums/user-status.enum';
 import { SortOrder } from '@common/enums/sort-order.enum';
-import { ToLowerCase } from '@/common/decorators/to-lowercase.decorator';
+import { ToUpperCase } from '@/common/decorators/to-uppercase.decorator';
 
 export class UserQueryDto extends PaginationDto {
   @IsOptional()
@@ -26,7 +26,7 @@ export class UserQueryDto extends PaginationDto {
   sortBy?: string;
 
   @IsOptional()
-  @ToLowerCase()
+  @ToUpperCase()
   @IsEnum(SortOrder)
   sortOrder?: SortOrder;
 }

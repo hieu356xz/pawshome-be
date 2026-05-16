@@ -5,6 +5,7 @@ import { ToLowerCase } from '@/common/decorators/to-lowercase.decorator';
 import { PetGender } from '../enums/pet-gender.enum';
 import { PetAgeGroup } from '../enums/pet-age-group.enum';
 import { AdoptionStatus } from '../enums/adoption-status.enum';
+import { ToUpperCase } from '@/common/decorators/to-uppercase.decorator';
 
 export class PetQueryDto extends PaginationDto {
   @IsOptional()
@@ -43,7 +44,7 @@ export class PetQueryDto extends PaginationDto {
   sortBy?: string;
 
   @IsOptional()
-  @ToLowerCase()
+  @ToUpperCase()
   @IsEnum(SortOrder)
   sortOrder?: SortOrder;
 }

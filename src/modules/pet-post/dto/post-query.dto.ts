@@ -1,13 +1,9 @@
-import {
-  IsOptional,
-  IsEnum,
-  IsString,
-  IsBoolean,
-  IsNotEmpty,
-} from 'class-validator';
+import { IsOptional, IsEnum, IsString, IsNotEmpty } from 'class-validator';
 import { PaginationDto } from '@common/dto/pagination.dto';
 import { PostType } from '../enums/post-type.enum';
 import { PostStatus } from '../enums/post-status.enum';
+import { ToUpperCase } from '@common/decorators/to-uppercase.decorator';
+import { SortOrder } from '@/common/enums/sort-order.enum';
 
 export class PetPostQueryDto extends PaginationDto {
   @IsOptional()
@@ -27,8 +23,13 @@ export class PetPostQueryDto extends PaginationDto {
   search?: string;
 
   @IsOptional()
-  @IsBoolean()
-  includeDeleted?: boolean;
+  @IsString()
+  sortBy?: string;
+
+  @IsOptional()
+  @ToUpperCase()
+  @IsEnum(SortOrder)
+  sortOrder?: SortOrder;
 }
 
 export class SearchImageDto {

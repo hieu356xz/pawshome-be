@@ -1,7 +1,7 @@
 import { IsOptional, IsString, IsNumber, IsEnum } from 'class-validator';
 import { PaginationDto } from '@common/dto/pagination.dto';
 import { SortOrder } from '@common/enums/sort-order.enum';
-import { ToLowerCase } from '@/common/decorators/to-lowercase.decorator';
+import { ToUpperCase } from '@common/decorators/to-uppercase.decorator';
 import { BlogPostStatus } from '../enums/blog-post-status.enum';
 
 export class BlogPostQueryDto extends PaginationDto {
@@ -22,7 +22,7 @@ export class BlogPostQueryDto extends PaginationDto {
   sortBy?: string;
 
   @IsOptional()
-  @ToLowerCase()
+  @ToUpperCase()
   @IsString()
   sortOrder?: SortOrder;
 }

@@ -33,7 +33,16 @@ export class PetPostService implements BaseService {
   ) {}
 
   async findAll(query: PetPostQueryDto): Promise<PaginatedResponse<PetPost>> {
-    const { page, limit, postType, postStatus, location, search } = query;
+    const {
+      page,
+      limit,
+      postType,
+      postStatus,
+      location,
+      search,
+      sortBy,
+      sortOrder,
+    } = query;
 
     const where: FindOptionsWhere<PetPost> = {};
     if (postType) where.postType = postType;
@@ -56,6 +65,12 @@ export class PetPostService implements BaseService {
         '(post.title ILIKE :search OR post.description ILIKE :search)',
         { search: `%${search}%` },
       );
+    }
+
+    if (sortBy) {
+      queryBuilder.orderBy(`post.${sortBy}`, sortOrder ?? 'ASC');
+    } else {
+      queryBuilder.orderBy('post.createdAt', 'DESC');
     }
 
     queryBuilder
