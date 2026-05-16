@@ -6,18 +6,21 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto/update-user.dto';
+import { AssignRolesDto } from './dto/assign-roles.dto';
+import { PaginationDto } from '@common/dto/pagination.dto';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly service: UserService) {}
 
   @Get()
-  findAll() {
-    return this.service.findAll();
+  findAll(@Query() query: PaginationDto) {
+    return this.service.findAll(query);
   }
 
   @Get(':id')
@@ -41,7 +44,7 @@ export class UserController {
   }
 
   @Post(':id/roles')
-  assignRoles(@Param('id') id: string, @Body() data: { roleIds: string[] }) {
+  assignRoles(@Param('id') id: string, @Body() data: AssignRolesDto) {
     return this.service.assignRoles(id, data.roleIds);
   }
 }

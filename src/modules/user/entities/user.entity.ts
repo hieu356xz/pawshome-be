@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Role } from '@modules/role/entities/role.entity';
 import { UserStatus } from '../enums/user-status.enum';
+import { Exclude } from 'class-transformer';
 
 @Entity('users')
 export class User {
@@ -19,6 +20,7 @@ export class User {
   email!: string;
 
   @Column({ nullable: true })
+  @Exclude({ toPlainOnly: true })
   password!: string;
 
   @Column({ name: 'full_name', nullable: true })
@@ -47,6 +49,7 @@ export class User {
   warningCount!: number;
 
   @Column({ name: 'google_id', nullable: true, unique: true })
+  @Exclude({ toPlainOnly: true })
   googleId!: string;
 
   @ManyToMany(() => Role)

@@ -1,8 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { Role } from '@modules/role/entities/role.entity';
+import { PaginationDto } from '@common/dto/pagination.dto';
+import {
+  PaginatedResponse,
+  ResponseMeta,
+} from '@common/interfaces/response.interface';
 
 @Injectable()
 export class UserService {
@@ -11,8 +17,24 @@ export class UserService {
     private userRepo: Repository<User>,
   ) {}
 
-  findAll() {
-    return this.userRepo.find({ relations: ['roles', 'roles.permissions'] });
+  async findAll(query: PaginationDto): Promise<PaginatedResponse<User>> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const [results, total] = await this.userRepo.findAndCount({
+      relations: ['roles', 'roles.permissions'],
+      take: limit,
+      skip: (page - 1) * limit,
+    });
+
+    const meta: ResponseMeta = {
+      totalItems: total,
+      itemCount: results.length,
+      itemsPerPage: limit,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+    };
+
+    return { results, meta };
   }
 
   async findOne(id: string) {
@@ -31,9 +53,17 @@ export class UserService {
     });
   }
 
-  create(data: Partial<User>) {
+  async create(data: Partial<User>) {
+    if (data.password) {
+      data.password = await this.hashPassword(data.password);
+    }
     const user = this.userRepo.create(data);
     return this.userRepo.save(user);
+  }
+
+  private async hashPassword(password: string): Promise<string> {
+    const salt = await bcrypt.genSalt(10);
+    return bcrypt.hash(password, salt);
   }
 
   async update(id: string, data: Partial<User>) {
