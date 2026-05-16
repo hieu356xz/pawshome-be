@@ -6,6 +6,7 @@ export const RESOURCES = [
   'pet',
   'species',
   'breed',
+  'pet-image',
 ] as const;
 
 export type Resource = (typeof RESOURCES)[number];

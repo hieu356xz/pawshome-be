@@ -9,6 +9,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PetImageService } from './pet-image.service';
@@ -20,27 +21,72 @@ import {
   SearchImagesByTextDto,
   SearchImagesByImageAndTextDto,
 } from './dto/search-pet-image.dto';
+import { IdParamDto } from '@/common/dto/id-param.dto';
+import { Public } from '@/common/decorators/public.decorator';
+import { RequirePermissions } from '@/common/decorators/require-permissions.decorator';
+import { PolicyGuard } from '@/common/guards/policy.guard';
+import { EntityExistGuard } from '@/common/guards/entity-exist.guard';
+import { Pet } from '@modules/pet/entities/pet.entity';
+import { PetImage } from './entities/pet-image.entity';
+import { PetImageQueryDto } from './dto/pet-image-query.dto';
+import { PetIdParamDto } from './dto/pet-id-param.dto';
 
 @Controller('pets/:petId/images')
 export class PetImageController {
   constructor(private readonly service: PetImageService) {}
 
+  @Public()
   @Get()
-  findAll(@Param('petId') petId: string) {
-    return this.service.findByPetId(petId);
+  @UseGuards(
+    EntityExistGuard(Pet, {
+      source: 'params',
+      sourceField: 'petId',
+      dto: PetIdParamDto,
+      dbField: 'id',
+    }),
+  )
+  findAll(@Param('petId') petId: string, @Query() query: PetImageQueryDto) {
+    return this.service.findAll({ ...query, petId });
   }
 
+  @Public()
   @Get(':id')
-  findOne(@Param() { id }: { id: string }) {
+  @UseGuards(
+    EntityExistGuard(Pet, {
+      source: 'params',
+      sourceField: 'petId',
+      dto: PetIdParamDto,
+      dbField: 'id',
+    }),
+  )
+  findOne(@Param() { id }: IdParamDto) {
     return this.service.findOne(id);
   }
 
   @Post()
+  @UseGuards(
+    EntityExistGuard(PetImage, {
+      source: 'params',
+      sourceField: 'id',
+      dto: IdParamDto,
+    }),
+    PolicyGuard,
+  )
+  @RequirePermissions('pet-image:create')
   create(@Param('petId') petId: string, @Body() data: CreatePetImageDto) {
     return this.service.create(petId, data.imageBase64, data.mimeType);
   }
 
   @Post('url')
+  @UseGuards(
+    EntityExistGuard(PetImage, {
+      source: 'params',
+      sourceField: 'id',
+      dto: IdParamDto,
+    }),
+    PolicyGuard,
+  )
+  @RequirePermissions('pet-image:create')
   createFromUrl(
     @Param('petId') petId: string,
     @Body() data: CreatePetImageFromUrlDto,
@@ -49,12 +95,30 @@ export class PetImageController {
   }
 
   @Post(':id/primary')
-  setPrimary(@Param('petId') petId: string, @Param() { id }: { id: string }) {
-    return this.service.setPrimary(id, petId);
+  @UseGuards(
+    EntityExistGuard(PetImage, {
+      source: 'params',
+      sourceField: 'id',
+      dto: IdParamDto,
+    }),
+    PolicyGuard,
+  )
+  @RequirePermissions('pet-image:update')
+  setPrimary(@Param() { id }: IdParamDto) {
+    return this.service.setPrimary(id);
   }
 
   @Delete(':id')
-  remove(@Param() { id }: { id: string }) {
+  @UseGuards(
+    EntityExistGuard(PetImage, {
+      source: 'params',
+      sourceField: 'id',
+      dto: IdParamDto,
+    }),
+    PolicyGuard,
+  )
+  @RequirePermissions('pet-image:delete')
+  remove(@Param() { id }: IdParamDto) {
     return this.service.remove(id);
   }
 }
@@ -64,6 +128,7 @@ export class ImageSearchController {
   constructor(private readonly service: PetImageService) {}
 
   @Get('search/text')
+  @RequirePermissions('pet-image:list')
   searchByText(@Query() query: SearchImagesByTextDto) {
     return this.service.searchByText(query.text, query.limit);
   }
@@ -88,6 +153,7 @@ export class ImageSearchController {
       },
     }),
   )
+  @RequirePermissions('pet-image:list')
   searchByImageAndText(
     @UploadedFile() file: Express.Multer.File,
     @Body() body: SearchImagesByImageAndTextDto,
@@ -123,6 +189,7 @@ export class ImageSearchController {
       },
     }),
   )
+  @RequirePermissions('pet-image:list')
   searchSimilarImages(@UploadedFile() file: Express.Multer.File) {
     const base64 = file.buffer.toString('base64');
     return this.service.searchSimilarImages(base64, file.mimetype);

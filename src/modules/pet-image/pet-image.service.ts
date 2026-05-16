@@ -1,8 +1,14 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, FindOptionsWhere, FindOptionsOrder } from 'typeorm';
 import { PetImage } from './entities/pet-image.entity';
+import { Pet } from '@modules/pet/entities/pet.entity';
 import { EmbeddingService } from '@modules/embedding/embedding.service';
+import {
+  PaginatedResponse,
+  ResponseMeta,
+} from '@common/interfaces/response.interface';
+import { PetImageQueryDto } from './dto/pet-image-query.dto';
 
 export interface Base64Image {
   mimeType: string;
@@ -16,8 +22,56 @@ export class PetImageService {
   constructor(
     @InjectRepository(PetImage)
     private imageRepo: Repository<PetImage>,
+    @InjectRepository(Pet)
+    private petRepo: Repository<Pet>,
     private embeddingService: EmbeddingService,
   ) {}
+
+  private async isPetExist(id: string): Promise<boolean> {
+    return this.petRepo.exists({ where: { id } });
+  }
+
+  private async isPetImageExist(id: string): Promise<boolean> {
+    return this.imageRepo.exists({ where: { id } });
+  }
+
+  async findAll(query: PetImageQueryDto): Promise<PaginatedResponse<PetImage>> {
+    const { page, limit, isPrimary, petId } = query;
+
+    if (petId && !(await this.isPetExist(petId))) {
+      throw new NotFoundException(`Pet #${petId} does not exist`);
+    }
+
+    const where: FindOptionsWhere<PetImage> = {};
+    if (petId) {
+      where.petId = petId;
+    }
+    if (isPrimary !== undefined) {
+      where.isPrimary = isPrimary;
+    }
+
+    const order: FindOptionsOrder<PetImage> = {
+      isPrimary: 'DESC',
+      createdAt: 'DESC',
+    };
+
+    const [results, total] = await this.imageRepo.findAndCount({
+      where,
+      order,
+      take: limit,
+      skip: (page - 1) * limit,
+    });
+
+    const meta: ResponseMeta = {
+      totalItems: total,
+      itemCount: results.length,
+      itemsPerPage: limit,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+    };
+
+    return { results, meta };
+  }
 
   async findByPetId(petId: string): Promise<PetImage[]> {
     return this.imageRepo.find({
@@ -28,7 +82,7 @@ export class PetImageService {
 
   async findOne(id: string): Promise<PetImage> {
     const image = await this.imageRepo.findOne({ where: { id } });
-    if (!image) throw new NotFoundException(`PetImage #${id} not found`);
+    if (!image) throw new NotFoundException(`PetImage #${id} does not exist`);
     return image;
   }
 
@@ -37,6 +91,10 @@ export class PetImageService {
     base64: string,
     mimeType: string,
   ): Promise<PetImage> {
+    if (!(await this.isPetExist(petId))) {
+      throw new NotFoundException(`Pet #${petId} does not exist`);
+    }
+
     const embedding = await this.embeddingService.embed({
       imageBase64: base64,
       imageMimeType: mimeType,
@@ -54,6 +112,10 @@ export class PetImageService {
   }
 
   async createFromUrl(petId: string, imageUrl: string): Promise<PetImage> {
+    if (!(await this.isPetExist(petId))) {
+      throw new NotFoundException(`Pet #${petId} does not exist`);
+    }
+
     this.logger.log(`Fetching image from URL: ${imageUrl}`);
     const image = await this.fetchImageAsBase64(imageUrl);
     const embedding = await this.embeddingService.embed({
@@ -73,9 +135,17 @@ export class PetImageService {
     return this.imageRepo.save(imageEntity);
   }
 
-  async setPrimary(id: string, petId: string): Promise<PetImage> {
+  async setPrimary(id: string): Promise<PetImage> {
+    if (!(await this.isPetImageExist(id))) {
+      throw new NotFoundException(`PetImage #${id} does not exist`);
+    }
+    const image = await this.findOne(id);
+    if (!(await this.isPetExist(image.petId))) {
+      throw new NotFoundException(`Pet #${image.petId} does not exist`);
+    }
+
     await this.imageRepo.update(
-      { petId, isPrimary: true },
+      { petId: image.petId, isPrimary: true },
       { isPrimary: false },
     );
 
@@ -84,6 +154,14 @@ export class PetImageService {
   }
 
   async remove(id: string): Promise<boolean> {
+    if (!(await this.isPetImageExist(id))) {
+      throw new NotFoundException(`PetImage #${id} does not exist`);
+    }
+    const image = await this.findOne(id);
+    if (!(await this.isPetExist(image.petId))) {
+      throw new NotFoundException(`Pet #${image.petId} does not exist`);
+    }
+
     const result = await this.imageRepo.delete(id);
     return !!result.affected;
   }
