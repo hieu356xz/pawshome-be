@@ -83,7 +83,7 @@ export function EntityExistGuard<E extends object, D extends object>(
 
       const dbtInstance = plainToInstance(options.dto, {
         [options.sourceField]: rawValue,
-      });
+      }) as D;
 
       const errors = await validate(dbtInstance);
       const fieldErrors = errors.filter(
@@ -105,7 +105,7 @@ export function EntityExistGuard<E extends object, D extends object>(
 
       if (options.allowMultiple) {
         // should has been validated by class-validator at this point
-        const ids = rawValue as unknown[];
+        const ids = dbtInstance[options.sourceField] as unknown[];
         const where = {
           [dbField]: In(ids),
         } as FindOptionsWhere<E>;
@@ -143,7 +143,8 @@ export function EntityExistGuard<E extends object, D extends object>(
         return true;
       }
 
-      const where = { [dbField]: rawValue } as FindOptionsWhere<E>;
+      const validatedValue = dbtInstance[options.sourceField];
+      const where = { [dbField]: validatedValue } as FindOptionsWhere<E>;
       const resources = await repo.find({ where });
 
       if (resources.length === 0) {
