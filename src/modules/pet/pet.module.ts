@@ -18,6 +18,6 @@ const PET_SERVICE = `PET_${SERVICE_SUFFIX}`;
       useExisting: PetService,
     },
   ],
-  exports: [TypeOrmModule, PET_SERVICE],
+  exports: [TypeOrmModule, PET_SERVICE, EmbeddingModule],
 })
 export class PetModule {}
