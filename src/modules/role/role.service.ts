@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, FindOptionsOrder } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Role } from './entities/role.entity';
 import { Permission } from '@modules/permission/entities/permission.entity';
 import { PermissionService } from '@modules/permission/permission.service';

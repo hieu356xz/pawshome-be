@@ -1,12 +1,4 @@
-import {
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsEnum,
-  Max,
-  IsArray,
-  ValidateNested,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsEnum } from 'class-validator';
 import { PostType } from '../enums/post-type.enum';
 import { PostStatus } from '../enums/post-status.enum';
 

@@ -9,7 +9,6 @@ import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
 import { UserService } from '@modules/user/user.service';
 import { User } from '@modules/user/entities/user.entity';
-import { Role } from '@modules/role/entities/role.entity';
 import { UserStatus } from '@modules/user/enums/user-status.enum';
 import { PasswordResetService } from '@modules/password-reset/password-reset.service';
 import { LoginDto } from './dto/login.dto';
@@ -17,7 +16,7 @@ import { RegisterDto } from './dto/register.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { TokenPayload } from './interfaces/user-payload.interface';
-import { TokenResponseDto, AuthResponseDto } from './dto/token-response.dto';
+import { AuthResponseDto } from './dto/token-response.dto';
 import { GoogleUser } from './interfaces/google-user.interface';
 
 interface TokenPair {

@@ -6,7 +6,6 @@ import * as cheerio from 'cheerio';
 import slugify from 'slugify';
 import { BlogPost } from './entities/blog-post.entity';
 import { BlogPostComment } from './entities/blog-post-comment.entity';
-import { Tag } from './entities/tag.entity';
 import { BlogTagService } from './blog-tag.service';
 import { StorageService } from '@common/services/storage.service';
 import {

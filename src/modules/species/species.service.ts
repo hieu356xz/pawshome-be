@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsOrder } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Species } from './entities/species.entity';
 import { SpeciesQueryDto } from './dto/species-query.dto';
 import {
