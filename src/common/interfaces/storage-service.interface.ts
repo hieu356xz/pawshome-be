@@ -3,7 +3,6 @@ export const STORAGE_SERVICE = 'STORAGE_SERVICE';
 export interface UploadOptions {
   folder: string;
   fileName?: string;
-  mimeType: string;
 }
 
 export interface IStorageService {
