@@ -8,6 +8,11 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 
+type HttpExceptionResponse = {
+  message?: string;
+  errors?: object[];
+};
+
 type ApiErrorResponse = {
   success: false;
   statusCode: number;
@@ -40,27 +45,25 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const exceptionResponse =
       exception instanceof HttpException
         ? exception.getResponse()
-        : { message: 'Internal server error' };
+        : 'Internal server error';
 
-    const message =
-      typeof exceptionResponse === 'string'
-        ? exceptionResponse
-        : (exceptionResponse as any).message || 'Internal server error';
+    const isStringResponse = typeof exceptionResponse === 'string';
 
-    const errors =
-      typeof exceptionResponse === 'object' && (exceptionResponse as any).errors
-        ? (exceptionResponse as any).errors
-        : null;
+    const message = isStringResponse
+      ? exceptionResponse
+      : ((exceptionResponse as HttpExceptionResponse).message ??
+        'Internal server error');
+
+    const errors = !isStringResponse
+      ? (exceptionResponse as HttpExceptionResponse).errors
+      : undefined;
 
     const responseBody: ApiErrorResponse = {
       success: false,
       statusCode: status,
       message,
+      errors,
     };
-
-    if (errors) {
-      responseBody.errors = errors;
-    }
 
     this.logger.error(
       `Exception: ${JSON.stringify(exceptionResponse)}`,
