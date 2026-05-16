@@ -99,7 +99,7 @@ export class BlogPostService {
     query: BlogPostQueryDto,
     isAdmin = false,
   ): Promise<PaginatedResponse<BlogPost>> {
-    const { page, limit, search, tagId, status } = query;
+    const { page, limit, search, tagSlug, status } = query;
 
     const queryBuilder = this.postRepo
       .createQueryBuilder('post')
@@ -120,8 +120,8 @@ export class BlogPostService {
       );
     }
 
-    if (tagId) {
-      queryBuilder.andWhere('tag.id = :tagId', { tagId });
+    if (tagSlug) {
+      queryBuilder.andWhere('tag.slug = :tagSlug', { tagSlug });
     }
 
     queryBuilder

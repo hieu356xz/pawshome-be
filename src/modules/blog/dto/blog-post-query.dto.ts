@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsNumber, IsEnum } from 'class-validator';
+import { IsOptional, IsString, IsEnum } from 'class-validator';
 import { PaginationDto } from '@common/dto/pagination.dto';
 import { SortOrder } from '@common/enums/sort-order.enum';
 import { ToUpperCase } from '@common/decorators/to-uppercase.decorator';
@@ -10,8 +10,8 @@ export class BlogPostQueryDto extends PaginationDto {
   search?: string;
 
   @IsOptional()
-  @IsNumber()
-  tagId?: number;
+  @IsString()
+  tagSlug?: string;
 
   @IsOptional()
   @IsEnum(BlogPostStatus)
