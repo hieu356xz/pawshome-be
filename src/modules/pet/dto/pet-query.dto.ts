@@ -1,7 +1,7 @@
 import { IsOptional, IsString, IsEnum, IsNumber } from 'class-validator';
 import { PaginationDto } from '@common/dto/pagination.dto';
 import { SortOrder } from '@common/enums/sort-order.enum';
-import { ToUpperCase } from '@common/decorators/to-uppercase.decorator';
+import { ToLowerCase } from '@/common/decorators/to-lowercase.decorator';
 import { PetGender } from '../enums/pet-gender.enum';
 import { PetAgeGroup } from '../enums/pet-age-group.enum';
 import { AdoptionStatus } from '../enums/adoption-status.enum';
@@ -20,17 +20,17 @@ export class PetQueryDto extends PaginationDto {
   breedId?: number;
 
   @IsOptional()
-  @ToUpperCase()
+  @ToLowerCase()
   @IsEnum(PetGender)
   gender?: PetGender;
 
   @IsOptional()
-  @ToUpperCase()
+  @ToLowerCase()
   @IsEnum(PetAgeGroup)
   ageGroup?: PetAgeGroup;
 
   @IsOptional()
-  @ToUpperCase()
+  @ToLowerCase()
   @IsEnum(AdoptionStatus)
   adoptionStatus?: AdoptionStatus;
 
@@ -43,7 +43,7 @@ export class PetQueryDto extends PaginationDto {
   sortBy?: string;
 
   @IsOptional()
-  @ToUpperCase()
+  @ToLowerCase()
   @IsEnum(SortOrder)
   sortOrder?: SortOrder;
 }

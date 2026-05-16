@@ -1,7 +1,7 @@
 import { IsOptional, IsNumber, IsString } from 'class-validator';
 import { PaginationDto } from '@common/dto/pagination.dto';
 import { SortOrder } from '@common/enums/sort-order.enum';
-import { ToUpperCase } from '@common/decorators/to-uppercase.decorator';
+import { ToLowerCase } from '@/common/decorators/to-lowercase.decorator';
 import { IsEnum } from 'class-validator';
 
 export class BreedQueryDto extends PaginationDto {
@@ -22,7 +22,7 @@ export class BreedQueryDto extends PaginationDto {
   sortBy?: string;
 
   @IsOptional()
-  @ToUpperCase()
+  @ToLowerCase()
   @IsEnum(SortOrder)
   sortOrder?: SortOrder;
 }
