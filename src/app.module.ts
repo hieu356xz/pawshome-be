@@ -12,6 +12,7 @@ import { PetModule } from './modules/pet/pet.module';
 import { PetImageModule } from './modules/pet-image/pet-image.module';
 import { MedicalRecordModule } from './modules/medical-record/medical-record.module';
 import { AdoptionRequestModule } from './modules/adoption-request/adoption-request.module';
+import { PetPostModule } from './modules/pet-post/pet-post.module';
 import databaseConfig from './config/database.config';
 
 @Module({
@@ -36,6 +37,7 @@ import databaseConfig from './config/database.config';
     PetImageModule,
     MedicalRecordModule,
     AdoptionRequestModule,
+    PetPostModule,
   ],
   controllers: [],
   providers: [],
