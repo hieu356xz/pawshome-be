@@ -73,25 +73,32 @@ export class PetImageController {
     PolicyGuard,
   )
   @RequirePermissions('pet-image:create')
-  create(@Param('petId') petId: string, @Body() data: CreatePetImageDto) {
-    return this.service.create(petId, data.imageBase64, data.mimeType);
+  async create(@Param('petId') petId: string, @Body() data: CreatePetImageDto) {
+    const image = await this.service.create(
+      petId,
+      data.imageBase64,
+      data.mimeType,
+    );
+    return this.service.toResponseWithEmbedding(image);
   }
 
   @Post('url')
   @UseGuards(
-    EntityExistGuard(PetImage, {
+    EntityExistGuard(Pet, {
       source: 'params',
-      sourceField: 'id',
-      dto: IdParamDto,
+      sourceField: 'petId',
+      dto: PetIdParamDto,
+      dbField: 'id',
     }),
     PolicyGuard,
   )
   @RequirePermissions('pet-image:create')
-  createFromUrl(
+  async createFromUrl(
     @Param('petId') petId: string,
     @Body() data: CreatePetImageFromUrlDto,
   ) {
-    return this.service.createFromUrl(petId, data.imageUrl);
+    const image = await this.service.createFromUrl(petId, data.imageUrl);
+    return this.service.toResponseWithEmbedding(image);
   }
 
   @Post(':id/primary')
@@ -104,8 +111,9 @@ export class PetImageController {
     PolicyGuard,
   )
   @RequirePermissions('pet-image:update')
-  setPrimary(@Param() { id }: IdParamDto) {
-    return this.service.setPrimary(id);
+  async setPrimary(@Param() { id }: IdParamDto) {
+    const image = await this.service.setPrimary(id);
+    return this.service.toResponseWithEmbedding(image);
   }
 
   @Delete(':id')
@@ -130,7 +138,8 @@ export class ImageSearchController {
   @Get('search/text')
   @RequirePermissions('pet-image:list')
   searchByText(@Query() query: SearchImagesByTextDto) {
-    return this.service.searchByText(query.text, query.limit);
+    const images = this.service.searchByText(query.text, query.limit);
+    return images.then((imgs) => this.service.toResponsesWithEmbedding(imgs));
   }
 
   @Post('search')
@@ -154,7 +163,7 @@ export class ImageSearchController {
     }),
   )
   @RequirePermissions('pet-image:list')
-  searchByImageAndText(
+  async searchByImageAndText(
     @UploadedFile() file: Express.Multer.File,
     @Body() body: SearchImagesByImageAndTextDto,
   ) {
@@ -162,11 +171,12 @@ export class ImageSearchController {
     const imageMimeType = file?.mimetype;
     const queryText = body?.text;
 
-    return this.service.searchByImageAndText(
+    const images = await this.service.searchByImageAndText(
       imageBase64,
       imageMimeType,
       queryText,
     );
+    return this.service.toResponsesWithEmbedding(images);
   }
 
   @Post('search/similar')
@@ -190,8 +200,12 @@ export class ImageSearchController {
     }),
   )
   @RequirePermissions('pet-image:list')
-  searchSimilarImages(@UploadedFile() file: Express.Multer.File) {
+  async searchSimilarImages(@UploadedFile() file: Express.Multer.File) {
     const base64 = file.buffer.toString('base64');
-    return this.service.searchSimilarImages(base64, file.mimetype);
+    const images = await this.service.searchSimilarImages(
+      base64,
+      file.mimetype,
+    );
+    return this.service.toResponsesWithEmbedding(images);
   }
 }

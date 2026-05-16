@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, FindOptionsOrder } from 'typeorm';
+import { plainToInstance } from 'class-transformer';
 import { PetImage } from './entities/pet-image.entity';
 import { EmbeddingService } from '@modules/embedding/embedding.service';
 import {
@@ -14,6 +15,7 @@ import {
   ResponseMeta,
 } from '@common/interfaces/response.interface';
 import { PetImageQueryDto } from './dto/pet-image-query.dto';
+import { PetImageResponseDto } from './dto/pet-image-response.dto';
 import { PetService } from '../pet/pet.service';
 
 export interface Base64Image {
@@ -289,5 +291,15 @@ export class PetImageService {
       mimeType,
       data: buffer.toString('base64'),
     };
+  }
+
+  toResponseWithEmbedding(image: PetImage): PetImageResponseDto {
+    return plainToInstance(PetImageResponseDto, image, {
+      excludeExtraneousValues: false,
+    });
+  }
+
+  toResponsesWithEmbedding(images: PetImage[]): PetImageResponseDto[] {
+    return images.map((img) => this.toResponseWithEmbedding(img));
   }
 }
