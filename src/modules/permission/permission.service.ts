@@ -9,6 +9,7 @@ import { Permission } from './entities/permission.entity';
 import { Role } from '../role/entities/role.entity';
 import { PolicyService } from './policy.service';
 import type { PolicyEvaluationContext } from './interfaces/policy-condition.interface';
+import { PermissionKey } from './enums/permission-key.enum';
 
 @Injectable()
 export class PermissionService implements BaseService<Permission> {
@@ -23,12 +24,13 @@ export class PermissionService implements BaseService<Permission> {
     private policyService: PolicyService,
   ) {}
 
-  async getPermissionsForRoles(roleNames: string[]): Promise<string[]> {
-    const permissionsSet = new Set<string>();
+  async getPermissionsForRoles(roleNames: string[]): Promise<PermissionKey[]> {
+    const permissionsSet = new Set<PermissionKey>();
 
     for (const roleName of roleNames) {
       const cacheKey = `permissions:role:${roleName}`;
-      let rolePermissions = await this.cacheManager.get<string[]>(cacheKey);
+      let rolePermissions =
+        await this.cacheManager.get<PermissionKey[]>(cacheKey);
 
       if (!rolePermissions) {
         const permissions = await this.permissionRepo
@@ -36,7 +38,7 @@ export class PermissionService implements BaseService<Permission> {
           .innerJoin('permission.roles', 'role')
           .where('role.name = :roleName', { roleName })
           .select('permission.key', 'key')
-          .getRawMany<{ key: string }>();
+          .getRawMany<{ key: PermissionKey }>();
 
         rolePermissions = permissions.map((p) => p.key);
         await this.cacheManager.set(cacheKey, rolePermissions, this.CACHE_TTL);
@@ -49,8 +51,8 @@ export class PermissionService implements BaseService<Permission> {
   }
 
   matchesPermission(
-    userPermissions: string[],
-    requiredPermission: string,
+    userPermissions: PermissionKey[],
+    requiredPermission: PermissionKey,
   ): boolean {
     return userPermissions.some((userPerm) =>
       this.permissionMatches(userPerm, requiredPermission),
@@ -58,8 +60,8 @@ export class PermissionService implements BaseService<Permission> {
   }
 
   private permissionMatches(
-    userPermission: string,
-    requiredPermission: string,
+    userPermission: PermissionKey,
+    requiredPermission: PermissionKey,
   ): boolean {
     if (userPermission === requiredPermission) {
       return true;
@@ -83,7 +85,7 @@ export class PermissionService implements BaseService<Permission> {
   }
 
   async checkAccess(
-    requiredPermission: string,
+    requiredPermission: PermissionKey,
     userId: string,
     userRoles: string[],
     resource: Record<string, any>,

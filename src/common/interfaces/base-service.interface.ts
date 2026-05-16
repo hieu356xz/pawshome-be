@@ -1,6 +1,6 @@
 import { PaginatedResponse } from './response.interface';
 
-export const SERVICE_SUFFIX = 'Service';
+export const SERVICE_SUFFIX = 'SERVICE';
 
 export interface BaseService<T = unknown> {
   findOne(id: string, ...args: any[]): Promise<T | null>;

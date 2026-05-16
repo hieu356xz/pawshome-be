@@ -5,15 +5,12 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { SERVICE_SUFFIX } from '@/common/interfaces/base-service.interface';
 
+const USER_SERVICE = `USER_${SERVICE_SUFFIX}`;
+
 @Module({
   imports: [TypeOrmModule.forFeature([User])],
   controllers: [UserController],
-  providers: [
-    {
-      provide: `USER_${SERVICE_SUFFIX}`,
-      useClass: UserService,
-    },
-  ],
-  exports: [UserService],
+  providers: [UserService, { provide: USER_SERVICE, useExisting: UserService }],
+  exports: [UserService, USER_SERVICE],
 })
 export class UserModule {}

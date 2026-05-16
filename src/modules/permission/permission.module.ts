@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Global, Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Permission } from './entities/permission.entity';
@@ -8,6 +8,9 @@ import { PolicyModule } from './policy.module';
 import { PolicyGuard } from '../../common/guards/policy.guard';
 import { SERVICE_SUFFIX } from '@/common/interfaces/base-service.interface';
 
+export const PERMISSION_SERVICE = `PERMISSION_${SERVICE_SUFFIX}`;
+
+@Global()
 @Module({
   imports: [
     TypeOrmModule.forFeature([Permission]),
@@ -16,12 +19,13 @@ import { SERVICE_SUFFIX } from '@/common/interfaces/base-service.interface';
   ],
   controllers: [PermissionController],
   providers: [
-    {
-      provide: `PERMISSION_${SERVICE_SUFFIX}`,
-      useClass: PermissionService,
-    },
+    PermissionService,
     PolicyGuard,
+    {
+      provide: PERMISSION_SERVICE,
+      useExisting: PermissionService,
+    },
   ],
-  exports: [PermissionService, PolicyModule, PolicyGuard],
+  exports: [PermissionService, PolicyModule, PolicyGuard, PERMISSION_SERVICE],
 })
 export class PermissionModule {}

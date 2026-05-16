@@ -10,6 +10,7 @@ import type { Request } from 'express';
 import { PermissionService } from '@modules/permission/permission.service';
 import { UserPayload } from '@modules/auth/interfaces/user-payload.interface';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
+import { PermissionKey } from '@/modules/permission/enums/permission-key.enum';
 
 interface RequestWithUser extends Request {
   user?: UserPayload;
@@ -23,10 +24,9 @@ export class PermissionsGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
-      PERMISSIONS_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const requiredPermissions = this.reflector.getAllAndOverride<
+      PermissionKey[]
+    >(PERMISSIONS_KEY, [context.getHandler(), context.getClass()]);
 
     // No permissions required, allow access
     if (!requiredPermissions || requiredPermissions.length === 0) {

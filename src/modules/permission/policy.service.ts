@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -11,6 +11,7 @@ import type {
   PolicyRule,
   PolicyEvaluationContext,
 } from './interfaces/policy-condition.interface';
+import { PermissionKey } from './enums/permission-key.enum';
 
 const MAX_CONDITION_DEPTH = 3;
 
@@ -58,20 +59,37 @@ export class PolicyService {
   }
 
   async checkAccess(
-    requiredPermission: string,
+    requiredPermissions: PermissionKey | PermissionKey[],
     context: PolicyEvaluationContext,
   ): Promise<PolicyCheckResult> {
     const roles = context.user.roles || [];
     const policies = await this.getPoliciesForRoles(roles);
 
+    // console.log('Evaluating policies for user:', context.user.id);
+    // console.log('User Roles:', roles);
+    // console.log('Required Permissions:', requiredPermissions);
+    // console.log('Loaded Policies:', policies);
+
+    // Normalize to array
+    const permissionList = Array.isArray(requiredPermissions)
+      ? requiredPermissions
+      : [requiredPermissions];
+
+    // Find all matching policies
     const matchingPolicies = policies.filter((policy) =>
-      this.matchesPermissionKey(policy.permission.key, requiredPermission),
+      permissionList.some((perm) =>
+        this.matchesPermissionKey(policy.permission.key, perm),
+      ),
     );
 
     if (matchingPolicies.length === 0) {
+      Logger.warn(
+        `No policy found for roles: [${roles.join(', ')}] and permissions: [${permissionList.join(', ')}]`,
+      );
       return { allowed: false, reason: 'NO_POLICY' };
     }
 
+    // Policies with higher (larger) priority evaluate first
     matchingPolicies.sort((a, b) => b.priority - a.priority);
 
     for (const policy of matchingPolicies) {
