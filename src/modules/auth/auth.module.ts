@@ -8,6 +8,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { UserModule } from '@modules/user/user.module';
 import { PermissionModule } from '@modules/permission/permission.module';
+import { PasswordResetModule } from '@modules/password-reset/password-reset.module';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { PermissionsGuard } from '@common/guards/permissions.guard';
 import { APP_GUARD } from '@nestjs/core';
@@ -27,6 +28,7 @@ import { APP_GUARD } from '@nestjs/core';
     }),
     UserModule,
     PermissionModule,
+    PasswordResetModule,
   ],
   controllers: [AuthController],
   providers: [

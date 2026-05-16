@@ -10,8 +10,11 @@ import { Response } from 'express';
 import { UserService } from '@modules/user/user.service';
 import { User } from '@modules/user/entities/user.entity';
 import { UserStatus } from '@modules/user/enums/user-status.enum';
+import { PasswordResetService } from '@modules/password-reset/password-reset.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { TokenPayload } from './interfaces/user-payload.interface';
 import { TokenResponseDto, AuthResponseDto } from './dto/token-response.dto';
 import { GoogleUser } from './interfaces/google-user.interface';
@@ -28,6 +31,7 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly passwordResetService: PasswordResetService,
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthResponseDto> {
@@ -184,6 +188,44 @@ export class AuthService {
 
   async getCurrentUser(userId: string): Promise<User> {
     return this.userService.findOne(userId);
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string }> {
+    const user = await this.userService.findByEmail(dto.email);
+
+    if (!user) {
+      return { message: 'If the email exists, a reset link will be sent' };
+    }
+
+    if (user.googleId) {
+      return { message: 'If the email exists, a reset link will be sent' };
+    }
+
+    const { token } = await this.passwordResetService.createOrUpdate(user.id);
+
+    await this.passwordResetService.sendPasswordResetEmail(
+      user.email,
+      token,
+      dto.language,
+    );
+
+    return { message: 'If the email exists, a reset link will be sent' };
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
+    const record = await this.passwordResetService.verify(dto.token);
+
+    if (!record) {
+      throw new UnauthorizedException('Invalid or expired reset token');
+    }
+
+    await this.userService.update(record.userId, {
+      password: dto.newPassword,
+    });
+
+    await this.passwordResetService.markUsed(record.id);
+
+    return { message: 'Password reset successfully' };
   }
 
   private async generateTokenPair(user: User): Promise<TokenPair> {

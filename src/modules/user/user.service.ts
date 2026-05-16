@@ -149,6 +149,10 @@ export class UserService implements BaseService<User> {
       throw new NotFoundException(`User #${id} does not exist`);
     }
 
+    if (data.password) {
+      data.password = await this.hashPassword(data.password);
+    }
+
     await this.userRepo.update(id, data);
     return this.userRepo.findOne({ where: { id } });
   }
