@@ -68,6 +68,7 @@ export class AdoptionRequestService {
     const [results, total] = await this.requestRepo.findAndCount({
       where,
       order,
+      relations: ['pet', 'user', 'pet.images', 'pet.breed', 'pet.species'],
       take: limit,
       skip: (page - 1) * limit,
     });
@@ -86,6 +87,7 @@ export class AdoptionRequestService {
   async findByPetId(petId: string): Promise<AdoptionRequest[]> {
     return this.requestRepo.find({
       where: { petId },
+      relations: ['pet', 'user', 'pet.images', 'pet.breed', 'pet.species'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -93,6 +95,7 @@ export class AdoptionRequestService {
   async findByUserId(userId: string): Promise<AdoptionRequest[]> {
     return this.requestRepo.find({
       where: { userId },
+      relations: ['pet', 'user', 'pet.images', 'pet.breed', 'pet.species'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -100,7 +103,7 @@ export class AdoptionRequestService {
   async findOne(id: string): Promise<AdoptionRequest> {
     const request = await this.requestRepo.findOne({
       where: { id },
-      relations: ['pet', 'user'],
+      relations: ['pet', 'user', 'pet.images', 'pet.breed', 'pet.species'],
     });
     if (!request)
       throw new NotFoundException(`AdoptionRequest #${id} does not exist`);
