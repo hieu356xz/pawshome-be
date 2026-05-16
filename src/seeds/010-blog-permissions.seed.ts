@@ -43,40 +43,27 @@ const createAllowPolicy = (
   priority,
 });
 
-export class PetPostPermissionsSeed implements Seeder {
+export class BlogPermissionsSeed implements Seeder {
   public async run(dataSource: DataSource): Promise<void> {
     const permissionRepo = dataSource.getRepository(Permission);
     const roleRepo = dataSource.getRepository(Role);
     const policyRepo = dataSource.getRepository(Policy);
 
     const permissions: Partial<Permission>[] = [
-      { key: 'pet-post:create', description: 'Create pet posts' },
-      { key: 'pet-post:read', description: 'Read pet posts' },
-      { key: 'pet-post:update', description: 'Update pet posts' },
-      { key: 'pet-post:delete', description: 'Delete pet posts' },
-      { key: 'pet-post:list', description: 'List pet posts' },
+      { key: 'blog:create', description: 'Create blog posts' },
+      { key: 'blog:read', description: 'Read blog posts' },
+      { key: 'blog:update', description: 'Update blog posts' },
+      { key: 'blog:delete', description: 'Delete blog posts' },
+      { key: 'blog:list', description: 'List blog posts' },
+      { key: 'blog:*', description: 'All blog actions', assignable: false },
+      { key: 'blog-comment:create', description: 'Create blog comments' },
+      { key: 'blog-comment:read', description: 'Read blog comments' },
+      { key: 'blog-comment:update', description: 'Update blog comments' },
+      { key: 'blog-comment:delete', description: 'Delete blog comments' },
+      { key: 'blog-comment:list', description: 'List blog comments' },
       {
-        key: 'pet-post:*',
-        description: 'All pet-post actions',
-        assignable: false,
-      },
-      {
-        key: 'pet-post-comment:create',
-        description: 'Create pet post comments',
-      },
-      { key: 'pet-post-comment:read', description: 'Read pet post comments' },
-      {
-        key: 'pet-post-comment:update',
-        description: 'Update pet post comments',
-      },
-      {
-        key: 'pet-post-comment:delete',
-        description: 'Delete pet post comments',
-      },
-      { key: 'pet-post-comment:list', description: 'List pet post comments' },
-      {
-        key: 'pet-post-comment:*',
-        description: 'All pet-post actions',
+        key: 'blog-comment:*',
+        description: 'All blog comment actions',
         assignable: false,
       },
     ];
@@ -89,27 +76,20 @@ export class PetPostPermissionsSeed implements Seeder {
       });
       if (existing) {
         await permissionRepo.update({ key: perm.key }, perm);
-        console.log(`[PetPostPermissionsSeed] Updated permission: ${perm.key}`);
+        console.log(`[BlogPermissionsSeed] Updated permission: ${perm.key}`);
         savedPermissions.push(existing);
         continue;
       }
       const permission = permissionRepo.create(perm);
       const saved = await permissionRepo.save(permission);
       savedPermissions.push(saved);
-      console.log(`[PetPostPermissionsSeed] Created permission: ${perm.key}`);
+      console.log(`[BlogPermissionsSeed] Created permission: ${perm.key}`);
     }
 
     const permMap = new Map(savedPermissions.map((p) => [p.key, p]));
 
     const roleMap = new Map<string, Role>();
-    const requiredRoles = [
-      'admin',
-      'manager',
-      'staff',
-      'veterinarian',
-      'volunteer',
-      'member',
-    ];
+    const requiredRoles = ['admin', 'manager', 'staff'];
 
     for (const name of requiredRoles) {
       const role = await roleRepo.findOne({ where: { name } });
@@ -119,91 +99,87 @@ export class PetPostPermissionsSeed implements Seeder {
     const missingRoles = requiredRoles.filter((name) => !roleMap.has(name));
     if (missingRoles.length > 0) {
       console.log(
-        `[PetPostPermissionsSeed] Warning: Missing roles: ${missingRoles.join(', ')}`,
+        `[BlogPermissionsSeed] Warning: Missing roles: ${missingRoles.join(', ')}`,
       );
     }
 
     const rolePermissionMap: Record<string, PermissionKey[]> = {
       admin: [
-        'pet-post:create',
-        'pet-post:read',
-        'pet-post:update',
-        'pet-post:delete',
-        'pet-post:list',
-        'pet-post-comment:create',
-        'pet-post-comment:read',
-        'pet-post-comment:update',
-        'pet-post-comment:delete',
-        'pet-post-comment:list',
+        'blog:create',
+        'blog:read',
+        'blog:update',
+        'blog:delete',
+        'blog:list',
+        'blog-comment:create',
+        'blog-comment:read',
+        'blog-comment:update',
+        'blog-comment:delete',
+        'blog-comment:list',
       ],
       manager: [
-        'pet-post:create',
-        'pet-post:read',
-        'pet-post:update',
-        'pet-post:delete',
-        'pet-post:list',
-        'pet-post-comment:create',
-        'pet-post-comment:read',
-        'pet-post-comment:update',
-        'pet-post-comment:delete',
-        'pet-post-comment:list',
+        'blog:create',
+        'blog:read',
+        'blog:update',
+        'blog:delete',
+        'blog:list',
+        'blog-comment:create',
+        'blog-comment:read',
+        'blog-comment:update',
+        'blog-comment:delete',
+        'blog-comment:list',
       ],
       staff: [
-        'pet-post:create',
-        'pet-post:read',
-        'pet-post:update',
-        'pet-post:delete',
-        'pet-post:list',
-        'pet-post-comment:create',
-        'pet-post-comment:read',
-        'pet-post-comment:update',
-        'pet-post-comment:delete',
-        'pet-post-comment:list',
+        'blog:create',
+        'blog:read',
+        'blog:update',
+        'blog:delete',
+        'blog:list',
+        'blog-comment:create',
+        'blog-comment:read',
+        'blog-comment:update',
+        'blog-comment:delete',
+        'blog-comment:list',
       ],
       veterinarian: [
-        'pet-post:create',
-        'pet-post:read',
-        'pet-post:update',
-        'pet-post:delete',
-        'pet-post-comment:create',
-        'pet-post-comment:read',
-        'pet-post-comment:update',
-        'pet-post-comment:delete',
+        'blog:read',
+        'blog:list',
+        'blog-comment:read',
+        'blog-comment:list',
+        'blog-comment:create',
+        'blog-comment:update',
+        'blog-comment:delete',
       ],
       volunteer: [
-        'pet-post:create',
-        'pet-post:read',
-        'pet-post:update',
-        'pet-post:delete',
-        'pet-post-comment:create',
-        'pet-post-comment:read',
-        'pet-post-comment:update',
-        'pet-post-comment:delete',
+        'blog:read',
+        'blog:list',
+        'blog-comment:read',
+        'blog-comment:list',
+        'blog-comment:create',
+        'blog-comment:update',
+        'blog-comment:delete',
       ],
       member: [
-        'pet-post:create',
-        'pet-post:read',
-        'pet-post:update',
-        'pet-post:delete',
-        'pet-post-comment:create',
-        'pet-post-comment:read',
-        'pet-post-comment:update',
-        'pet-post-comment:delete',
+        'blog:read',
+        'blog:list',
+        'blog-comment:read',
+        'blog-comment:list',
+        'blog-comment:create',
+        'blog-comment:update',
+        'blog-comment:delete',
       ],
     };
 
     const permissionsWithAllowPolicy: PermissionKey[] = [
-      'pet-post:read',
-      'pet-post:create',
-      'pet-post-comment:read',
-      'pet-post-comment:create',
+      'blog:read',
+      'blog:list',
+      'blog-comment:read',
+      'blog-comment:create',
+      'blog-comment:list',
     ];
 
     const permissionsWithOwnPolicy: PermissionKey[] = [
-      'pet-post:update',
-      'pet-post:delete',
-      'pet-post-comment:update',
-      'pet-post-comment:delete',
+      'blog-comment:update',
+      'blog-comment:delete',
     ];
 
     for (const [roleName, permKeys] of Object.entries(rolePermissionMap)) {
@@ -231,35 +207,35 @@ export class PetPostPermissionsSeed implements Seeder {
         ];
         await roleRepo.save(existingRole!);
         console.log(
-          `[PetPostPermissionsSeed] Assigned to ${roleName}: ${newPerms.map((p) => p.key).join(', ')}`,
+          `[BlogPermissionsSeed] Assigned to ${roleName}: ${newPerms.map((p) => p.key).join(', ')}`,
         );
       }
     }
 
     const policies: Partial<Policy>[] = [
-      // Manager - all pet-post actions
+      // Manager - all blog actions
       createAllowPolicy(
         roleMap.get('manager')!.id,
-        permMap.get('pet-post:*')!.id,
+        permMap.get('blog:*')!.id,
         80,
       ),
       createAllowPolicy(
         roleMap.get('manager')!.id,
-        permMap.get('pet-post-comment:*')!.id,
+        permMap.get('blog-comment:*')!.id,
         80,
       ),
-      // Staff - all pet-post actions (no conditions)
+      // Staff - all blog actions
       createAllowPolicy(
         roleMap.get('staff')!.id,
-        permMap.get('pet-post:*')!.id,
+        permMap.get('blog:*')!.id,
         50,
       ),
       createAllowPolicy(
         roleMap.get('staff')!.id,
-        permMap.get('pet-post-comment:*')!.id,
+        permMap.get('blog-comment:*')!.id,
         50,
       ),
-      // Veterinarian - can update/delete own posts and comments, can create/read all
+      // Veterinarian - can update/delete own comments, can create/read all
       ...permissionsWithAllowPolicy.map((perm) =>
         createAllowPolicy(
           roleMap.get('veterinarian')!.id,
@@ -275,7 +251,7 @@ export class PetPostPermissionsSeed implements Seeder {
           40,
         ),
       ),
-      // Volunteer - can update/delete own posts and comments, can create/read all
+      // Volunteer - can update/delete own comments, can create/read all
       ...permissionsWithAllowPolicy.map((perm) =>
         createAllowPolicy(
           roleMap.get('volunteer')!.id,
@@ -291,7 +267,7 @@ export class PetPostPermissionsSeed implements Seeder {
           30,
         ),
       ),
-      // Member - can update/delete own posts and comments, can create/read all
+      // Member - can update/delete own comments, can create/read all
       ...permissionsWithAllowPolicy.map((perm) =>
         createAllowPolicy(roleMap.get('member')!.id, permMap.get(perm)!.id, 20),
       ),
@@ -320,15 +296,15 @@ export class PetPostPermissionsSeed implements Seeder {
           { roleId: policyData.roleId, permissionId: policyData.permissionId },
           policyData,
         );
-        console.log(`[PetPostPermissionsSeed] Updated policy`);
+        console.log(`[BlogPermissionsSeed] Updated policy`);
         continue;
       }
 
       const policy = policyRepo.create(policyData);
       await policyRepo.save(policy);
-      console.log(`[PetPostPermissionsSeed] Created policy`);
+      console.log(`[BlogPermissionsSeed] Created policy`);
     }
 
-    console.log('[PetPostPermissionsSeed] Completed!');
+    console.log('[BlogPermissionsSeed] Completed!');
   }
 }
