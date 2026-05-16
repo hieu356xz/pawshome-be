@@ -22,8 +22,8 @@ const createOwnCondition = (resource: string): PolicyConditions => ({
 const createOwnPolicies = (
   roleId: string,
   permissionId: string,
+  resource: string,
   priority: number,
-  resource: string = 'pet-post',
 ): Partial<Policy> => ({
   roleId,
   permissionId,
@@ -41,29 +41,6 @@ const createAllowPolicy = (
   permissionId,
   effect: PolicyEffect.ALLOW,
   priority,
-});
-
-const createOwnCommentCondition = (): PolicyConditions => ({
-  operator: 'AND',
-  rules: [
-    {
-      field: `$resources.pet-post-comment.userId`,
-      operator: PolicyOperator.EQUALS,
-      value: '$user.id',
-    },
-  ],
-});
-
-const createOwnCommentPolicies = (
-  roleId: string,
-  permissionId: string,
-  priority: number,
-): Partial<Policy> => ({
-  roleId,
-  permissionId,
-  effect: PolicyEffect.ALLOW,
-  priority,
-  conditions: createOwnCommentCondition(),
 });
 
 export class PetPostPermissionsSeed implements Seeder {
@@ -215,10 +192,17 @@ export class PetPostPermissionsSeed implements Seeder {
       ],
     };
 
+    const permissionsWithAllowPolicy: PermissionKey[] = [
+      'pet-post:read',
+      'pet-post:create',
+      'pet-post-comment:read',
+      'pet-post-comment:create',
+    ];
+
     const permissionsWithOwnPolicy: PermissionKey[] = [
       'pet-post:update',
       'pet-post:delete',
-      'pet-post-comment:read',
+      'pet-post-comment:update',
       'pet-post-comment:delete',
     ];
 
@@ -265,14 +249,49 @@ export class PetPostPermissionsSeed implements Seeder {
         permMap.get('pet-post:*')!.id,
         50,
       ),
-      ...permissionsWithOwnPolicy.map((perm) =>
-        createAllowPolicy(roleMap.get('veterinarian')!.id, perm, 40),
+      // Veterinarian - can update/delete own posts and comments, can create/read all
+      ...permissionsWithAllowPolicy.map((perm) =>
+        createAllowPolicy(
+          roleMap.get('veterinarian')!.id,
+          permMap.get(perm)!.id,
+          40,
+        ),
       ),
       ...permissionsWithOwnPolicy.map((perm) =>
-        createAllowPolicy(roleMap.get('volunteer')!.id, perm, 30),
+        createOwnPolicies(
+          roleMap.get('veterinarian')!.id,
+          permMap.get(perm)!.id,
+          perm.split(':')[0],
+          40,
+        ),
+      ),
+      // Volunteer - can update/delete own posts and comments, can create/read all
+      ...permissionsWithAllowPolicy.map((perm) =>
+        createAllowPolicy(
+          roleMap.get('volunteer')!.id,
+          permMap.get(perm)!.id,
+          30,
+        ),
       ),
       ...permissionsWithOwnPolicy.map((perm) =>
-        createAllowPolicy(roleMap.get('member')!.id, perm, 20),
+        createOwnPolicies(
+          roleMap.get('volunteer')!.id,
+          permMap.get(perm)!.id,
+          perm.split(':')[0],
+          30,
+        ),
+      ),
+      // Member - can update/delete own posts and comments, can create/read all
+      ...permissionsWithAllowPolicy.map((perm) =>
+        createAllowPolicy(roleMap.get('member')!.id, permMap.get(perm)!.id, 20),
+      ),
+      ...permissionsWithOwnPolicy.map((perm) =>
+        createOwnPolicies(
+          roleMap.get('member')!.id,
+          permMap.get(perm)!.id,
+          perm.split(':')[0],
+          20,
+        ),
       ),
     ];
 
