@@ -11,6 +11,10 @@ export class SpeciesQueryDto extends PaginationDto {
 
   @IsOptional()
   @IsString()
+  search?: string;
+
+  @IsOptional()
+  @IsString()
   sortBy?: string;
 
   @IsOptional()

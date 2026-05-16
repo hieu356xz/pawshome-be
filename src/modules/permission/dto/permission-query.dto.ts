@@ -14,6 +14,10 @@ export class PermissionQueryDto extends PaginationDto {
 
   @IsOptional()
   @IsString()
+  search?: string;
+
+  @IsOptional()
+  @IsString()
   sortBy?: string;
 
   @IsOptional()

@@ -6,13 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  Repository,
-  In,
-  FindOptionsWhere,
-  FindOptionsOrder,
-  Like,
-} from 'typeorm';
+import { Repository, In, FindOptionsOrder } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import type { DeepPartial } from 'typeorm';
@@ -44,30 +38,38 @@ export class PermissionService implements BaseService<Permission> {
   async findAll(
     query: PermissionQueryDto,
   ): Promise<PaginatedResponse<Permission>> {
-    const { page, limit, key, description, sortBy, sortOrder } = query;
+    const { page, limit, key, description, search, sortBy, sortOrder } = query;
 
-    const where: FindOptionsWhere<Permission> = {};
+    const queryBuilder = this.permissionRepo
+      .createQueryBuilder('permission')
+      .leftJoinAndSelect('permission.roles', 'roles');
 
     if (key) {
-      where.key = key as PermissionKey;
+      queryBuilder.andWhere('permission.key = :key', { key });
     }
 
     if (description) {
-      where.description = Like(`%${description}%`);
+      queryBuilder.andWhere('permission.description LIKE :description', {
+        description: `%${description}%`,
+      });
     }
 
-    const order: FindOptionsOrder<Permission> = {};
+    if (search) {
+      queryBuilder.andWhere(
+        '(permission.key ILIKE :search OR permission.description ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
     if (sortBy) {
-      order[sortBy] = sortOrder ?? 'ASC';
+      queryBuilder.orderBy(`permission.${sortBy}`, sortOrder ?? 'ASC');
+    } else {
+      queryBuilder.orderBy('permission.key', 'ASC');
     }
 
-    const [results, total] = await this.permissionRepo.findAndCount({
-      where,
-      order,
-      relations: ['roles'],
-      take: limit,
-      skip: (page - 1) * limit,
-    });
+    queryBuilder.take(limit).skip((page - 1) * limit);
+
+    const [results, total] = await queryBuilder.getManyAndCount();
 
     const meta: ResponseMeta = {
       totalItems: total,

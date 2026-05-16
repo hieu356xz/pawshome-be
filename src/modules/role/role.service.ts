@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, FindOptionsWhere, FindOptionsOrder } from 'typeorm';
+import { Repository, In, FindOptionsOrder } from 'typeorm';
 import { Role } from './entities/role.entity';
 import { Permission } from '@modules/permission/entities/permission.entity';
 import { PermissionService } from '@modules/permission/permission.service';
@@ -24,26 +24,31 @@ export class RoleService implements BaseService<Role> {
   ) {}
 
   async findAll(query: RoleQueryDto): Promise<PaginatedResponse<Role>> {
-    const { page, limit, name, sortBy, sortOrder } = query;
+    const { page, limit, name, search, sortBy, sortOrder } = query;
 
-    const where: FindOptionsWhere<Role> = {};
+    const queryBuilder = this.roleRepo
+      .createQueryBuilder('role')
+      .leftJoinAndSelect('role.permissions', 'permissions');
 
     if (name) {
-      where.name = name;
+      queryBuilder.andWhere('role.name = :name', { name });
     }
 
-    const order: FindOptionsOrder<Role> = {};
+    if (search) {
+      queryBuilder.andWhere('role.name ILIKE :search', {
+        search: `%${search}%`,
+      });
+    }
+
     if (sortBy) {
-      order[sortBy] = sortOrder ?? 'ASC';
+      queryBuilder.orderBy(`role.${sortBy}`, sortOrder ?? 'ASC');
+    } else {
+      queryBuilder.orderBy('role.createdAt', 'DESC');
     }
 
-    const [results, total] = await this.roleRepo.findAndCount({
-      where,
-      order,
-      relations: ['permissions'],
-      take: limit,
-      skip: (page - 1) * limit,
-    });
+    queryBuilder.take(limit).skip((page - 1) * limit);
+
+    const [results, total] = await queryBuilder.getManyAndCount();
 
     const meta: ResponseMeta = {
       totalItems: total,

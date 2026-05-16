@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, FindOptionsOrder } from 'typeorm';
+import { Repository, FindOptionsOrder } from 'typeorm';
 import { Breed } from './entities/breed.entity';
 import { BreedQueryDto } from './dto/breed-query.dto';
 import { Species } from '@modules/species/entities/species.entity';
@@ -22,32 +22,35 @@ export class BreedService implements BaseService<Breed> {
   ) {}
 
   async findAll(query: BreedQueryDto): Promise<PaginatedResponse<Breed>> {
-    const { page, limit, speciesId, name, sortBy, sortOrder } = query;
+    const { page, limit, speciesId, name, search, sortBy, sortOrder } = query;
 
-    const where: FindOptionsWhere<Breed> = {};
+    const queryBuilder = this.breedRepo
+      .createQueryBuilder('breed')
+      .leftJoinAndSelect('breed.species', 'species');
 
     if (speciesId) {
-      where.speciesId = speciesId;
+      queryBuilder.andWhere('breed.speciesId = :speciesId', { speciesId });
     }
 
     if (name) {
-      where.name = name;
+      queryBuilder.andWhere('breed.name = :name', { name });
     }
 
-    const order: FindOptionsOrder<Breed> = {};
+    if (search) {
+      queryBuilder.andWhere('breed.name ILIKE :search', {
+        search: `%${search}%`,
+      });
+    }
+
     if (sortBy) {
-      order[sortBy] = sortOrder ?? 'ASC';
+      queryBuilder.orderBy(`breed.${sortBy}`, sortOrder ?? 'ASC');
     } else {
-      order.id = 'ASC';
+      queryBuilder.orderBy('breed.id', 'ASC');
     }
 
-    const [results, total] = await this.breedRepo.findAndCount({
-      where,
-      order,
-      take: limit,
-      skip: (page - 1) * limit,
-      relations: ['species'],
-    });
+    queryBuilder.take(limit).skip((page - 1) * limit);
+
+    const [results, total] = await queryBuilder.getManyAndCount();
 
     const meta: ResponseMeta = {
       totalItems: total,

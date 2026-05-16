@@ -10,6 +10,10 @@ export class RoleQueryDto extends PaginationDto {
 
   @IsOptional()
   @IsString()
+  search?: string;
+
+  @IsOptional()
+  @IsString()
   sortBy?: string;
 
   @IsOptional()
