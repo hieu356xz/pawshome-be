@@ -5,6 +5,7 @@ import {
   S3ClientConfig,
   PutObjectCommand,
   DeleteObjectCommand,
+  NoSuchKey,
 } from '@aws-sdk/client-s3';
 import {
   IStorageService,
@@ -71,13 +72,23 @@ export class StorageService implements IStorageService {
   }
 
   async deleteFile(key: string): Promise<void> {
-    await this.s3Client.send(
-      new DeleteObjectCommand({
-        Bucket: this.bucketName,
-        Key: key,
-      }),
-    );
-    this.logger.log(`Deleted file: ${key}`);
+    try {
+      await this.s3Client.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+        }),
+      );
+      this.logger.log(`Deleted file: ${key}`);
+    } catch (error) {
+      if (error instanceof NoSuchKey) {
+        this.logger.warn(
+          `File not found in the storage, skipping delete: ${key}`,
+        );
+        return;
+      }
+      throw error;
+    }
   }
 
   async deleteFileWithUrl(url: string): Promise<void> {
