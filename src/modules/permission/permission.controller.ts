@@ -20,7 +20,6 @@ import { EntityExistGuard } from '@/common/guards/entity-exist.guard';
 import { Permission } from './entities/permission.entity';
 
 @Controller('permission')
-@UseGuards(PolicyGuard)
 export class PermissionController {
   constructor(private readonly service: PermissionService) {}
 

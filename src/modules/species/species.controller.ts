@@ -20,7 +20,6 @@ import { EntityExistGuard } from '@/common/guards/entity-exist.guard';
 import { Species } from './entities/species.entity';
 
 @Controller('species')
-@UseGuards(PolicyGuard)
 export class SpeciesController {
   constructor(private readonly service: SpeciesService) {}
 

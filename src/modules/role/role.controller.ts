@@ -22,7 +22,6 @@ import { Role } from './entities/role.entity';
 import { Permission } from '@modules/permission/entities/permission.entity';
 
 @Controller('role')
-@UseGuards(PolicyGuard)
 export class RoleController {
   constructor(private readonly service: RoleService) {}
 
