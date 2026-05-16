@@ -12,7 +12,7 @@ import {
 import { AdoptionRequestService } from './adoption-request.service';
 import { CreateAdoptionRequestDto } from './dto/create-adoption-request.dto';
 import { ReviewAdoptionRequestDto } from './dto/review-adoption-request.dto';
-import { IdParamDto } from '@/common/dto/id-param.dto';
+import { AdoptionRequestIdParamDto } from './dto/adoption-request-id-param.dto';
 import { RequirePermissions } from '@/common/decorators/require-permissions.decorator';
 import { PolicyGuard } from '@/common/guards/policy.guard';
 import { EntityExistGuard } from '@/common/guards/entity-exist.guard';
@@ -50,12 +50,12 @@ export class AdoptionRequestController {
     EntityExistGuard(AdoptionRequest, {
       source: 'params',
       sourceField: 'id',
-      dto: IdParamDto,
+      dto: AdoptionRequestIdParamDto,
     }),
     PolicyGuard,
   )
   @RequirePermissions('adoption-request:read')
-  findOne(@Param() { id }: IdParamDto) {
+  findOne(@Param() { id }: AdoptionRequestIdParamDto) {
     return this.service.findOne(id);
   }
 
@@ -83,13 +83,13 @@ export class AdoptionRequestController {
     EntityExistGuard(AdoptionRequest, {
       source: 'params',
       sourceField: 'id',
-      dto: IdParamDto,
+      dto: AdoptionRequestIdParamDto,
     }),
     PolicyGuard,
   )
   @RequirePermissions('adoption-request:update')
   review(
-    @Param() { id }: IdParamDto,
+    @Param() { id }: AdoptionRequestIdParamDto,
     @CurrentUser() user: UserPayload,
     @Body() data: ReviewAdoptionRequestDto,
   ) {
@@ -101,12 +101,12 @@ export class AdoptionRequestController {
     EntityExistGuard(AdoptionRequest, {
       source: 'params',
       sourceField: 'id',
-      dto: IdParamDto,
+      dto: AdoptionRequestIdParamDto,
     }),
     PolicyGuard,
   )
   @RequirePermissions('adoption-request:delete')
-  remove(@Param() { id }: IdParamDto) {
+  remove(@Param() { id }: AdoptionRequestIdParamDto) {
     return this.service.remove(id);
   }
 }

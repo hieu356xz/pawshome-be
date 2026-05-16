@@ -22,6 +22,7 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { UpdateBlogPostTagsDto } from './dto/update-blog-post-tags.dto';
 import { BlogPostQueryDto } from './dto/blog-post-query.dto';
+import { BlogPostIdParamDto } from './dto/blog-post-id-param.dto';
 import { IdParamDto } from '@/common/dto/id-param.dto';
 import { Public } from '@/common/decorators/public.decorator';
 import { RequirePermissions } from '@/common/decorators/require-permissions.decorator';
@@ -191,13 +192,13 @@ export class BlogPostCommentController {
     EntityExistGuard(BlogPostComment, {
       source: 'params',
       sourceField: 'id',
-      dto: IdParamDto,
+      dto: BlogPostIdParamDto,
     }),
     PolicyGuard,
   )
   @RequirePermissions('blog-comment:update')
   update(
-    @Param() { id }: IdParamDto,
+    @Param() { id }: BlogPostIdParamDto,
     @CurrentUser() user: UserPayload,
     @Body() data: UpdateCommentDto,
   ) {
@@ -209,12 +210,15 @@ export class BlogPostCommentController {
     EntityExistGuard(BlogPostComment, {
       source: 'params',
       sourceField: 'id',
-      dto: IdParamDto,
+      dto: BlogPostIdParamDto,
     }),
     PolicyGuard,
   )
   @RequirePermissions('blog-comment:delete')
-  remove(@Param() { id }: IdParamDto, @CurrentUser() user: UserPayload) {
+  remove(
+    @Param() { id }: BlogPostIdParamDto,
+    @CurrentUser() user: UserPayload,
+  ) {
     return this.service.deleteComment(id, user.userId);
   }
 }

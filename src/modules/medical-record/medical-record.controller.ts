@@ -12,7 +12,7 @@ import {
 import { MedicalRecordService } from './medical-record.service';
 import { CreateMedicalRecordDto } from './dto/create-medical-record.dto';
 import { UpdateMedicalRecordDto } from './dto/update-medical-record.dto';
-import { IdParamDto } from '@/common/dto/id-param.dto';
+import { MedicalRecordIdParamDto } from './dto/medical-record-id-param.dto';
 import { Public } from '@/common/decorators/public.decorator';
 import { RequirePermissions } from '@/common/decorators/require-permissions.decorator';
 import { PolicyGuard } from '@/common/guards/policy.guard';
@@ -49,10 +49,10 @@ export class MedicalRecordController {
     EntityExistGuard(MedicalRecord, {
       source: 'params',
       sourceField: 'id',
-      dto: IdParamDto,
+      dto: MedicalRecordIdParamDto,
     }),
   )
-  findOne(@Param() { id }: IdParamDto) {
+  findOne(@Param() { id }: MedicalRecordIdParamDto) {
     return this.service.findOne(id);
   }
 
@@ -76,12 +76,15 @@ export class MedicalRecordController {
     EntityExistGuard(MedicalRecord, {
       source: 'params',
       sourceField: 'id',
-      dto: IdParamDto,
+      dto: MedicalRecordIdParamDto,
     }),
     PolicyGuard,
   )
   @RequirePermissions('medical-record:update')
-  update(@Param() { id }: IdParamDto, @Body() data: UpdateMedicalRecordDto) {
+  update(
+    @Param() { id }: MedicalRecordIdParamDto,
+    @Body() data: UpdateMedicalRecordDto,
+  ) {
     return this.service.update(id, data);
   }
 
@@ -90,12 +93,12 @@ export class MedicalRecordController {
     EntityExistGuard(MedicalRecord, {
       source: 'params',
       sourceField: 'id',
-      dto: IdParamDto,
+      dto: MedicalRecordIdParamDto,
     }),
     PolicyGuard,
   )
   @RequirePermissions('medical-record:delete')
-  remove(@Param() { id }: IdParamDto) {
+  remove(@Param() { id }: MedicalRecordIdParamDto) {
     return this.service.remove(id);
   }
 }

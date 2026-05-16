@@ -17,6 +17,7 @@ import { CreatePetPostDto, UpdatePetPostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { PetPostQueryDto } from './dto/post-query.dto';
+import { PetPostIdParamDto } from './dto/pet-post-id-param.dto';
 import { IdParamDto } from '@/common/dto/id-param.dto';
 import { Public } from '@/common/decorators/public.decorator';
 import { RequirePermissions } from '@/common/decorators/require-permissions.decorator';
@@ -133,7 +134,7 @@ export class PetPostImageController {
   @Delete(':id')
   @UseGuards(PolicyGuard)
   @RequirePermissions('pet-post:delete')
-  remove(@Param() { id }: IdParamDto) {
+  remove(@Param() { id }: PetPostIdParamDto) {
     return this.service.deleteImage(id);
   }
 }
@@ -164,12 +165,12 @@ export class PetPostCommentController {
     EntityExistGuard(PetPostComment, {
       source: 'params',
       sourceField: 'id',
-      dto: IdParamDto,
+      dto: PetPostIdParamDto,
     }),
     PolicyGuard,
   )
   @RequirePermissions('pet-post-comment:update')
-  update(@Param() { id }: IdParamDto, @Body() data: UpdateCommentDto) {
+  update(@Param() { id }: PetPostIdParamDto, @Body() data: UpdateCommentDto) {
     return this.service.updateComment(id, data);
   }
 
@@ -178,12 +179,12 @@ export class PetPostCommentController {
     EntityExistGuard(PetPostComment, {
       source: 'params',
       sourceField: 'id',
-      dto: IdParamDto,
+      dto: PetPostIdParamDto,
     }),
     PolicyGuard,
   )
   @RequirePermissions('pet-post-comment:delete')
-  remove(@Param() { id }: IdParamDto, @CurrentUser() user: UserPayload) {
+  remove(@Param() { id }: PetPostIdParamDto, @CurrentUser() user: UserPayload) {
     return this.service.deleteComment(id, user.userId);
   }
 }

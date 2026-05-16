@@ -17,7 +17,7 @@ import {
   SearchImagesByImageAndTextDto,
 } from './dto/search-pet-image.dto';
 import { CreatePetImageFromUrlDto } from './dto/create-pet-image.dto';
-import { IdParamDto } from '@/common/dto/id-param.dto';
+import { PetImageIdParamDto } from './dto/pet-image-id-param.dto';
 import { Public } from '@/common/decorators/public.decorator';
 import { RequirePermissions } from '@/common/decorators/require-permissions.decorator';
 import { PolicyGuard } from '@/common/guards/policy.guard';
@@ -52,10 +52,10 @@ export class PetImageController {
     EntityExistGuard(PetImage, {
       source: 'params',
       sourceField: 'id',
-      dto: IdParamDto,
+      dto: PetImageIdParamDto,
     }),
   )
-  findOne(@Param() { id }: IdParamDto) {
+  findOne(@Param() { id }: PetImageIdParamDto) {
     return this.service.findOne(id);
   }
 
@@ -103,12 +103,12 @@ export class PetImageController {
     EntityExistGuard(PetImage, {
       source: 'params',
       sourceField: 'id',
-      dto: IdParamDto,
+      dto: PetImageIdParamDto,
     }),
     PolicyGuard,
   )
   @RequirePermissions('pet-image:update')
-  async setPrimary(@Param() { id }: IdParamDto) {
+  async setPrimary(@Param() { id }: PetImageIdParamDto) {
     const image = await this.service.setPrimary(id);
     return this.service.toResponseWithEmbedding(image);
   }
@@ -118,12 +118,12 @@ export class PetImageController {
     EntityExistGuard(PetImage, {
       source: 'params',
       sourceField: 'id',
-      dto: IdParamDto,
+      dto: PetImageIdParamDto,
     }),
     PolicyGuard,
   )
   @RequirePermissions('pet-image:delete')
-  remove(@Param() { id }: IdParamDto) {
+  remove(@Param() { id }: PetImageIdParamDto) {
     return this.service.remove(id);
   }
 }
