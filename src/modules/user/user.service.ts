@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   Repository,
@@ -16,6 +20,33 @@ import {
   PaginatedResponse,
   ResponseMeta,
 } from '@common/interfaces/response.interface';
+
+const ROLE_HIERARCHY: Record<string, number> = {
+  admin: 1,
+  manager: 2,
+  staff: 3,
+  veterinarian: 4,
+  member: 5,
+  volunteer: 6,
+};
+
+const getRoleLevel = (role: Role): number => {
+  return ROLE_HIERARCHY[role.name] ?? 0;
+};
+
+const getHighestRoleLevel = (roles: Role[]): number => {
+  if (!roles.length) return 0;
+  return Math.min(...roles.map(getRoleLevel));
+};
+
+const canAssignRole = (
+  currentUserRoles: Role[],
+  targetUserRoles: Role[],
+): boolean => {
+  const currentLevel = getHighestRoleLevel(currentUserRoles);
+  const targetLevel = getHighestRoleLevel(targetUserRoles);
+  return currentLevel < targetLevel;
+};
 
 @Injectable()
 export class UserService implements BaseService<User> {
@@ -114,7 +145,7 @@ export class UserService implements BaseService<User> {
   }
 
   async update(id: string, data: Partial<User>) {
-    if (await this.isUserExist(id)) {
+    if (!(await this.isUserExist(id))) {
       throw new NotFoundException(`User #${id} does not exist`);
     }
 
@@ -123,7 +154,7 @@ export class UserService implements BaseService<User> {
   }
 
   async remove(id: string) {
-    if (await this.isUserExist(id)) {
+    if (!(await this.isUserExist(id))) {
       throw new NotFoundException(`User #${id} does not exist`);
     }
 
@@ -131,13 +162,22 @@ export class UserService implements BaseService<User> {
     return !!result.affected;
   }
 
-  async assignRoles(userId: string, roleIds: string[]) {
-    const user = await this.findOne(userId);
+  async assignRoles(userId: string, roleIds: string[], currentUserId: string) {
+    const targetUser = await this.findOne(userId);
+    const currentUser = await this.findOne(currentUserId);
+
+    if (!canAssignRole(currentUser.roles, targetUser.roles)) {
+      throw new ForbiddenException(
+        'You cannot assign roles to users with higher or equal privileges',
+      );
+    }
+
     const roles = await this.userRepo.manager.find(Role, {
       where: { id: In(roleIds) },
     });
-    user.roles = roles;
-    return this.userRepo.save(user);
+
+    targetUser.roles = roles;
+    return this.userRepo.save(targetUser);
   }
 
   protected async isUserExist(id: string) {

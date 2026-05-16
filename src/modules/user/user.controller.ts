@@ -20,6 +20,8 @@ import { PolicyGuard } from '@/common/guards/policy.guard';
 import { EntityExistGuard } from '@/common/guards/entity-exist.guard';
 import { User } from './entities/user.entity';
 import { Role } from '@modules/role/entities/role.entity';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import type { UserPayload } from '@modules/auth/interfaces/user-payload.interface';
 
 @Controller('user')
 export class UserController {
@@ -99,7 +101,11 @@ export class UserController {
     PolicyGuard,
   )
   @RequirePermissions('role:assign')
-  assignRoles(@Param() { id }: IdParamDto, @Body() data: AssignRolesDto) {
-    return this.service.assignRoles(id, data.roleIds);
+  assignRoles(
+    @Param() { id }: IdParamDto,
+    @Body() data: AssignRolesDto,
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.service.assignRoles(id, data.roleIds, user.userId);
   }
 }
