@@ -29,12 +29,6 @@ export class CreatePetPostDto {
   @IsString()
   @IsNotEmpty()
   contact!: string;
-
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Max(5)
-  images!: Array<{ imageBase64: string; mimeType: string }>;
 }
 
 export class UpdatePetPostDto {
