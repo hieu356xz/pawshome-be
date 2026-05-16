@@ -1,4 +1,10 @@
-export const RESOURCES = ['user', 'role', 'permission', 'pet'] as const;
+export const RESOURCES = [
+  'user',
+  'role',
+  'permission',
+  'policy',
+  'pet',
+] as const;
 
 export type Resource = (typeof RESOURCES)[number];
 

@@ -1,9 +1,17 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  Repository,
+  FindOptionsWhere,
+  FindOptionsOrder,
+  Like,
+  ILike,
+} from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { Policy } from './entities/policy.entity';
+import { Role } from '@modules/role/entities/role.entity';
+import { Permission } from './entities/permission.entity';
 import { PolicyEffect } from './enums/policy-effect.enum';
 import { PolicyOperator } from './enums/policy-operator.enum';
 import type {
@@ -12,6 +20,11 @@ import type {
   PolicyEvaluationContext,
 } from './interfaces/policy-condition.interface';
 import { PermissionKey } from './enums/permission-key.enum';
+import { PolicyQueryDto } from './dto/policy-query.dto';
+import type {
+  PaginatedResponse,
+  ResponseMeta,
+} from '@/common/interfaces/response.interface';
 
 const MAX_CONDITION_DEPTH = 3;
 
@@ -295,8 +308,69 @@ export class PolicyService {
     );
   }
 
-  findAll() {
-    return this.policyRepo.find({ relations: ['role', 'permission'] });
+  async findAll(query: PolicyQueryDto): Promise<PaginatedResponse<Policy>> {
+    const { page, limit, roleName, permissionKey, effect, sortBy, sortOrder } =
+      query;
+
+    const where: FindOptionsWhere<Policy> = {};
+
+    if (effect) {
+      where.effect = effect;
+    }
+
+    let roleCondition: FindOptionsWhere<Role> | undefined;
+    if (roleName) {
+      roleCondition = { name: Like(`%${roleName}%`) };
+    }
+
+    let permissionCondition: FindOptionsWhere<Permission> | undefined;
+    if (permissionKey) {
+      const keySearch: unknown = ILike(`%${permissionKey}%`);
+      permissionCondition = { key: keySearch as PermissionKey };
+    }
+
+    if (roleCondition) {
+      where.role = roleCondition;
+    }
+    if (permissionCondition) {
+      where.permission = permissionCondition;
+    }
+
+    const order: FindOptionsOrder<Policy> = {};
+    if (sortBy) {
+      order[sortBy] = sortOrder ?? 'ASC';
+    }
+
+    const [results, total] = await this.policyRepo.findAndCount({
+      where,
+      order,
+      relations: ['role', 'permission'],
+      take: limit,
+      skip: (page - 1) * limit,
+    });
+
+    const meta: ResponseMeta = {
+      totalItems: total,
+      itemCount: results.length,
+      itemsPerPage: limit,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+    };
+
+    return { results, meta };
+  }
+
+  async findOne(roleId: string, permissionId: string) {
+    const policy = await this.policyRepo.findOne({
+      where: { roleId, permissionId },
+      relations: ['role', 'permission'],
+    });
+    if (!policy) {
+      throw new NotFoundException(
+        `Policy #${roleId}/#${permissionId} does not exist`,
+      );
+    }
+    return policy;
   }
 
   async findByRoleAndPermission(roleId: string, permissionId: string) {
@@ -306,7 +380,7 @@ export class PolicyService {
     });
   }
 
-  create(data: Partial<Policy>) {
+  async create(data: Partial<Policy>) {
     const policy = this.policyRepo.create(data);
     return this.policyRepo.save(policy);
   }
