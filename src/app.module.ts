@@ -6,6 +6,9 @@ import { UserModule } from '@modules/user/user.module';
 import { RoleModule } from './modules/role/role.module';
 import { PermissionModule } from './modules/permission/permission.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { SpeciesModule } from './modules/species/species.module';
+import { BreedModule } from './modules/breed/breed.module';
+import { PetModule } from './modules/pet/pet.module';
 import databaseConfig from './config/database.config';
 
 @Module({
@@ -24,6 +27,9 @@ import databaseConfig from './config/database.config';
     RoleModule,
     PermissionModule,
     AuthModule,
+    SpeciesModule,
+    BreedModule,
+    PetModule,
   ],
   controllers: [],
   providers: [],
