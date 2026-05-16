@@ -7,13 +7,10 @@ import {
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import type { Response } from 'express';
-
-interface ApiResponse<T> {
-  success: boolean;
-  statusCode: number;
-  message: string;
-  data: T;
-}
+import {
+  ApiResponse,
+  ControllerResponse,
+} from '../interfaces/response.interface';
 
 /**
  * Global response interceptor to standardize API responses.
@@ -22,27 +19,45 @@ interface ApiResponse<T> {
  *   success: boolean,
  *   message: string,
  *   statusCode: number,
- *   data: any
+ *   data: T,
+ *   meta?: ResponseMeta
  * }
  */
 @Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<
-  T,
+  ControllerResponse<T>,
   ApiResponse<T>
 > {
   intercept(
     context: ExecutionContext,
-    next: CallHandler<T>,
+    next: CallHandler<ControllerResponse<T>>,
   ): Observable<ApiResponse<T>> {
     const response = context.switchToHttp().getResponse<Response>();
 
     return next.handle().pipe(
-      map((data) => ({
-        success: true,
-        statusCode: response.statusCode ?? 200,
-        message: 'Success',
-        data,
-      })),
+      map((data) => {
+        const isPagination =
+          data &&
+          typeof data === 'object' &&
+          'results' in data &&
+          'meta' in data;
+
+        if (isPagination) {
+          return {
+            success: true,
+            statusCode: response.statusCode ?? 200,
+            message: 'Success',
+            data: data.results,
+            meta: data.meta,
+          };
+        }
+        return {
+          success: true,
+          statusCode: response.statusCode ?? 200,
+          message: 'Success',
+          data,
+        };
+      }),
     );
   }
 }

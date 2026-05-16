@@ -7,18 +7,10 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
-
-type HttpExceptionResponse = {
-  message?: string;
-  errors?: object[];
-};
-
-type ApiErrorResponse = {
-  success: false;
-  statusCode: number;
-  message: string;
-  errors?: object[];
-};
+import {
+  ApiResponse,
+  ValidationErrorResponse,
+} from '../interfaces/response.interface';
 
 /**
  * Global exception filter to catch all unhandled exceptions and return a consistent error response format.
@@ -51,14 +43,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     const message = isStringResponse
       ? exceptionResponse
-      : ((exceptionResponse as HttpExceptionResponse).message ??
+      : ((exceptionResponse as ValidationErrorResponse).message ??
         'Internal server error');
 
     const errors = !isStringResponse
-      ? (exceptionResponse as HttpExceptionResponse).errors
+      ? (exceptionResponse as ValidationErrorResponse).errors
       : undefined;
 
-    const responseBody: ApiErrorResponse = {
+    const responseBody: ApiResponse<undefined> = {
       success: false,
       statusCode: status,
       message,
