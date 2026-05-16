@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -6,6 +6,8 @@ import type { Cache } from 'cache-manager';
 import type { DeepPartial } from 'typeorm';
 import { Permission } from './entities/permission.entity';
 import { Role } from '../role/entities/role.entity';
+import { PolicyService } from './policy.service';
+import type { PolicyEvaluationContext } from './interfaces/policy-condition.interface';
 
 @Injectable()
 export class PermissionService {
@@ -16,12 +18,10 @@ export class PermissionService {
     private permissionRepo: Repository<Permission>,
     @Inject(CACHE_MANAGER)
     private cacheManager: Cache,
+    @Inject(forwardRef(() => PolicyService))
+    private policyService: PolicyService,
   ) {}
 
-  /**
-   * Get all permissions for given role names (with caching)
-   * Cache key: permissions:role:{roleName}
-   */
   async getPermissionsForRoles(roleNames: string[]): Promise<string[]> {
     const permissionsSet = new Set<string>();
 
@@ -30,7 +30,6 @@ export class PermissionService {
       let rolePermissions = await this.cacheManager.get<string[]>(cacheKey);
 
       if (!rolePermissions) {
-        // Cache miss - query database
         const permissions = await this.permissionRepo
           .createQueryBuilder('permission')
           .innerJoin('permission.roles', 'role')
@@ -39,8 +38,6 @@ export class PermissionService {
           .getRawMany<{ key: string }>();
 
         rolePermissions = permissions.map((p) => p.key);
-
-        // Store in cache
         await this.cacheManager.set(cacheKey, rolePermissions, this.CACHE_TTL);
       }
 
@@ -50,26 +47,6 @@ export class PermissionService {
     return Array.from(permissionsSet);
   }
 
-  /**
-   * Invalidate cache for a specific role
-   * Call this when role permissions are updated
-   */
-  async invalidateRoleCache(roleName: string): Promise<void> {
-    const cacheKey = `permissions:role:${roleName}`;
-    await this.cacheManager.del(cacheKey);
-  }
-
-  /**
-   * Invalidate cache for multiple roles
-   */
-  async invalidateRolesCache(roleNames: string[]): Promise<void> {
-    await Promise.all(roleNames.map((name) => this.invalidateRoleCache(name)));
-  }
-
-  /**
-   * Check if user has a specific permission
-   * Supports wildcards: user:*, *
-   */
   matchesPermission(
     userPermissions: string[],
     requiredPermission: string,
@@ -79,24 +56,18 @@ export class PermissionService {
     );
   }
 
-  /**
-   * Check permission with wildcard support
-   */
   private permissionMatches(
     userPermission: string,
     requiredPermission: string,
   ): boolean {
-    // Exact match
     if (userPermission === requiredPermission) {
       return true;
     }
 
-    // Super admin wildcard
     if (userPermission === '*') {
       return true;
     }
 
-    // Resource wildcard (e.g., user:* matches user:read)
     const [userResource, userAction] = userPermission.split(':');
     const [requiredResource, requiredAction] = requiredPermission.split(':');
 
@@ -110,7 +81,39 @@ export class PermissionService {
     return false;
   }
 
-  // CRUD operations
+  async checkAccess(
+    requiredPermission: string,
+    userId: string,
+    userRoles: string[],
+    resource: Record<string, any>,
+  ): Promise<{ allowed: boolean; reason?: string }> {
+    const context: PolicyEvaluationContext = {
+      user: { id: userId, roles: userRoles },
+      resource,
+      env: { time: new Date() },
+    };
+
+    const result = await this.policyService.checkAccess(
+      requiredPermission,
+      context,
+    );
+
+    return {
+      allowed: result.allowed,
+      reason: result.reason,
+    };
+  }
+
+  async invalidateRoleCache(roleName: string): Promise<void> {
+    const cacheKey = `permissions:role:${roleName}`;
+    await this.cacheManager.del(cacheKey);
+    await this.policyService.invalidateRolePolicies(roleName);
+  }
+
+  async invalidateRolesCache(roleNames: string[]): Promise<void> {
+    await Promise.all(roleNames.map((name) => this.invalidateRoleCache(name)));
+  }
+
   findAll() {
     return this.permissionRepo.find({ relations: ['roles'] });
   }
@@ -137,7 +140,6 @@ export class PermissionService {
     return !!result.affected;
   }
 
-  // Additional: Get role names from role IDs (for cache invalidation)
   async getRoleNamesByIds(roleIds: string[]): Promise<string[]> {
     const roles = await this.permissionRepo.manager.find(Role, {
       where: { id: In(roleIds) },
