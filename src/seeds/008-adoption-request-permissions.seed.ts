@@ -101,6 +101,7 @@ export class AdoptionRequestPermissionsSeed implements Seeder {
       'manager',
       'staff',
       'veterinarian',
+      'volunteer',
       'member',
     ];
 
@@ -140,6 +141,7 @@ export class AdoptionRequestPermissionsSeed implements Seeder {
         'adoption-request:list',
       ],
       veterinarian: ['adoption-request:read', 'adoption-request:list'],
+      volunteer: ['adoption-request:read', 'adoption-request:list'],
       member: ['adoption-request:create', 'adoption-request:read'],
     };
 
@@ -187,11 +189,26 @@ export class AdoptionRequestPermissionsSeed implements Seeder {
       },
       // Staff - all adoption-request actions (no conditions)
       ...rolePermissionMap['staff'].map((perm) =>
-        createAllowPolicy(roleMap.get('staff')!.id, perm, 50),
+        createAllowPolicy(roleMap.get('staff')!.id, permMap.get(perm)!.id, 50),
       ),
       // Veterinarian - read, list only (no conditions)
       ...rolePermissionMap['veterinarian'].map((perm) =>
-        createAllowPolicy(roleMap.get('veterinarian')!.id, perm, 40),
+        createAllowPolicy(
+          roleMap.get('veterinarian')!.id,
+          permMap.get(perm)!.id,
+          40,
+        ),
+      ),
+      // Volunteer - can only create and read their own requests
+      createAllowPolicy(
+        roleMap.get('volunteer')!.id,
+        permMap.get('adoption-request:create')!.id,
+        30,
+      ),
+      createOwnPolicies(
+        roleMap.get('volunteer')!.id,
+        permMap.get('adoption-request:read')!.id,
+        30,
       ),
       // Member - can only create and read their own requests
       createAllowPolicy(

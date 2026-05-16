@@ -89,7 +89,14 @@ export class BlogPermissionsSeed implements Seeder {
     const permMap = new Map(savedPermissions.map((p) => [p.key, p]));
 
     const roleMap = new Map<string, Role>();
-    const requiredRoles = ['admin', 'manager', 'staff'];
+    const requiredRoles = [
+      'admin',
+      'manager',
+      'staff',
+      'veterinarian',
+      'volunteer',
+      'member',
+    ];
 
     for (const name of requiredRoles) {
       const role = await roleRepo.findOne({ where: { name } });
