@@ -13,6 +13,16 @@ npm run test         # jest (rootDir=src, pattern=*.spec.ts)
 npm run test:e2e     # e2e tests (test/jest-e2e.json)
 ```
 
+## Before Presenting Code
+
+Always run verification before presenting code to the user:
+
+```bash
+npm run build && npm run lint
+```
+
+Fix any errors first. Only proceed to testing after build and lint pass.
+
 ## Architecture
 
 - Entry: `src/main.ts` → `src/app.module.ts`
