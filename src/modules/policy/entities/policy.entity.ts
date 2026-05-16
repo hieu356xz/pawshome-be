@@ -5,6 +5,7 @@ import {
   Index,
   ManyToOne,
   PrimaryColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { PolicyEffect } from '../enums/policy-effect.enum';
 import type { PolicyConditions } from '@modules/policy/interfaces/policy-condition.interface';
@@ -35,6 +36,9 @@ export class Policy {
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt!: Date;
 
   @ManyToOne(() => Role, (role) => role.policies, { onDelete: 'CASCADE' })
   role!: Role;
