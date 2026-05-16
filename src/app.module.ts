@@ -14,6 +14,7 @@ import { MedicalRecordModule } from './modules/medical-record/medical-record.mod
 import { AdoptionRequestModule } from './modules/adoption-request/adoption-request.module';
 import { PetPostModule } from './modules/pet-post/pet-post.module';
 import { BlogModule } from './modules/blog/blog.module';
+import { MailModule } from './modules/mail/mail.module';
 import databaseConfig from './config/database.config';
 
 @Module({
@@ -40,6 +41,7 @@ import databaseConfig from './config/database.config';
     AdoptionRequestModule,
     PetPostModule,
     BlogModule,
+    MailModule,
   ],
   controllers: [],
   providers: [],
