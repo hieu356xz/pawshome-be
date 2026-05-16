@@ -218,11 +218,11 @@ export class PetPermissionsSeed implements Seeder {
         priority: 80,
       },
       // Staff - species/breed read+list, pet full
-      ...rolePermissionMap['staff']!.map((perm) =>
+      ...rolePermissionMap['staff'].map((perm) =>
         createAllowPolicy(roleMap.get('staff')!.id, permMap.get(perm)!.id, 50),
       ),
       // Veterinarian - species/breed read+list, pet read+update+list
-      ...rolePermissionMap['veterinarian']!.map((perm) =>
+      ...rolePermissionMap['veterinarian'].map((perm) =>
         createAllowPolicy(
           roleMap.get('veterinarian')!.id,
           permMap.get(perm)!.id,
@@ -230,7 +230,7 @@ export class PetPermissionsSeed implements Seeder {
         ),
       ),
       // Volunteer - species/breed read+list, pet read+list
-      ...rolePermissionMap['volunteer']!.map((perm) =>
+      ...rolePermissionMap['volunteer'].map((perm) =>
         createAllowPolicy(
           roleMap.get('volunteer')!.id,
           permMap.get(perm)!.id,
@@ -238,7 +238,7 @@ export class PetPermissionsSeed implements Seeder {
         ),
       ),
       // Member - same as volunteer
-      ...rolePermissionMap['member']!.map((perm) =>
+      ...rolePermissionMap['member'].map((perm) =>
         createAllowPolicy(roleMap.get('member')!.id, permMap.get(perm)!.id, 20),
       ),
     ];
