@@ -17,6 +17,7 @@ import { CreatePetPostDto, UpdatePetPostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { PetPostQueryDto } from './dto/post-query.dto';
+import { PetPostSearchDto } from './dto/pet-post-search.dto';
 import { PetPostIdParamDto } from './dto/pet-post-id-param.dto';
 import { IdParamDto } from '@/common/dto/id-param.dto';
 import { Public } from '@/common/decorators/public.decorator';
@@ -192,6 +193,19 @@ export class PetPostCommentController {
 @Controller('pet-posts/search')
 export class PetPostSearchController {
   constructor(private readonly service: PetPostService) {}
+
+  @Public()
+  @Post()
+  @UseInterceptors(FileInterceptor('image', FILE_INTERCEPTOR_OPTIONS))
+  search(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() query: PetPostSearchDto,
+  ) {
+    const imageBase64 = file?.buffer?.toString('base64');
+    const imageMimeType = file?.mimetype;
+
+    return this.service.search(imageBase64, imageMimeType, query);
+  }
 
   @Public()
   @Post('image')

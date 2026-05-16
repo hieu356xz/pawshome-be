@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, ILike } from 'typeorm';
+import { Repository, FindOptionsWhere, ILike, In } from 'typeorm';
 import { PetPost } from './entities/pet-post.entity';
 import { PetPostImage } from './entities/pet-post-image.entity';
 import { PetPostComment } from './entities/pet-post-comment.entity';
@@ -10,12 +10,18 @@ import {
   ResponseMeta,
 } from '@common/interfaces/response.interface';
 import { PetPostQueryDto } from './dto/post-query.dto';
+import { PetPostSearchDto } from './dto/pet-post-search.dto';
 import { CreatePetPostDto, UpdatePetPostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { PostStatus } from './enums/post-status.enum';
 import { BaseService } from '@/common/interfaces/base-service.interface';
 import { StorageService } from '@common/services/storage.service';
+
+export interface PetPostSearchResult {
+  post: PetPost;
+  similarityScore: number;
+}
 
 @Injectable()
 export class PetPostService implements BaseService {
@@ -212,6 +218,100 @@ export class PetPostService implements BaseService {
   ): Promise<PetPostComment | null> {
     await this.commentRepo.update(id, { content: data.comment });
     return this.commentRepo.findOne({ where: { id } });
+  }
+
+  async search(
+    imageBase64: string | undefined,
+    imageMimeType: string | undefined,
+    query: PetPostSearchDto,
+  ): Promise<PaginatedResponse<PetPostSearchResult>> {
+    const hasImage = !!imageBase64 && !!imageMimeType;
+    const hasText = !!query.text;
+
+    if (!hasImage && !hasText) {
+      throw new BadRequestException('Either image or text must be provided');
+    }
+
+    const embedding = await this.embeddingService.embed({
+      imageBase64: hasImage ? imageBase64 : undefined,
+      imageMimeType: hasImage ? imageMimeType : undefined,
+      text: hasText ? query.text : undefined,
+    });
+
+    const vectorStr = `[${embedding.join(',')}]`;
+    const { page, limit, postType, postStatus, location } = query;
+
+    const qb = this.postRepo
+      .createQueryBuilder('post')
+      .innerJoin('pet_post_images', 'pi', 'pi.post_id = post.id')
+      .where('pi.embedding IS NOT NULL');
+
+    if (postType) {
+      qb.andWhere('post.post_type = :postType', { postType });
+    }
+    if (postStatus) {
+      qb.andWhere('post.post_status = :postStatus', { postStatus });
+    }
+    if (location) {
+      qb.andWhere('post.location ILIKE :location', {
+        location: `%${location}%`,
+      });
+    }
+
+    const total = await qb.clone().select('DISTINCT post.id').getCount();
+
+    const rawResults = await qb
+      .select([
+        'post.id as id',
+        `MAX(1 - (pi.embedding <=> '${vectorStr}'::vector)) as similarity`,
+      ])
+      .groupBy('post.id')
+      .orderBy(`MAX(1 - (pi.embedding <=> '${vectorStr}'::vector))`, 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getRawMany<{ id: string; similarity: number }>();
+
+    const postIds = rawResults.map((r) => r.id);
+
+    if (postIds.length === 0) {
+      const meta: ResponseMeta = {
+        totalItems: 0,
+        itemCount: 0,
+        itemsPerPage: limit,
+        totalPages: 0,
+        currentPage: page,
+      };
+      return { results: [], meta };
+    }
+
+    const posts = await this.postRepo.find({
+      where: { id: In(postIds) } as FindOptionsWhere<PetPost>,
+      relations: ['images', 'user'],
+    });
+
+    const postMap = new Map(posts.map((p) => [p.id, p]));
+    const similarityMap = new Map(rawResults.map((r) => [r.id, r.similarity]));
+
+    const results: PetPostSearchResult[] = postIds
+      .map((id) => {
+        const post = postMap.get(id);
+        if (!post) return null;
+        return {
+          post,
+          similarityScore: similarityMap.get(id) ?? 0,
+        };
+      })
+      .filter((r): r is PetPostSearchResult => r !== null);
+
+    const meta: ResponseMeta = {
+      totalItems: total,
+      itemCount: results.length,
+      itemsPerPage: limit,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+    };
+
+    return { results, meta };
   }
 
   async searchByImage(
