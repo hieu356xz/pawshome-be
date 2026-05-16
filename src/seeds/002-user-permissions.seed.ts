@@ -39,14 +39,18 @@ export class UserPermissionsSeed implements Seeder {
     const roleRepo = dataSource.getRepository(Role);
     const policyRepo = dataSource.getRepository(Policy);
 
-    const permissions: Array<{ key: PermissionKey; description: string }> = [
-      { key: '*', description: 'All permissions (wildcard)' },
+    const permissions: Partial<Permission>[] = [
+      {
+        key: '*',
+        description: 'All permissions (wildcard)',
+        assignable: false,
+      },
       { key: 'user:create', description: 'Create users' },
       { key: 'user:read', description: 'Read users' },
       { key: 'user:update', description: 'Update users' },
-      { key: 'user:delete', description: 'Soft delete users' },
+      { key: 'user:delete', description: 'Delete users' },
       { key: 'user:list', description: 'List users' },
-      { key: 'user:*', description: 'All user actions' },
+      { key: 'user:*', description: 'All user actions', assignable: false },
     ];
 
     const savedPermissions: Permission[] = [];
@@ -56,9 +60,8 @@ export class UserPermissionsSeed implements Seeder {
         where: { key: perm.key },
       });
       if (existing) {
-        console.log(
-          `[UserPermissionsSeed] Permission "${perm.key}" already exists, skipping`,
-        );
+        await permissionRepo.update({ key: perm.key }, perm);
+        console.log(`[UserPermissionsSeed] Updated permission: ${perm.key}`);
         savedPermissions.push(existing);
         continue;
       }
@@ -197,7 +200,13 @@ export class UserPermissionsSeed implements Seeder {
       });
 
       if (existing) {
-        console.log(`[UserPermissionsSeed] Policy already exists, skipping`);
+        await policyRepo.update(
+          { roleId: policyData.roleId, permissionId: policyData.permissionId },
+          policyData,
+        );
+        console.log(
+          `[UserPermissionsSeed] Updated policy: ${policyData.roleId} -> ${policyData.permissionId}`,
+        );
         continue;
       }
 

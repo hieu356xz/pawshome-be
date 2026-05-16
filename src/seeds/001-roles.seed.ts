@@ -39,9 +39,8 @@ export class RolesSeed implements Seeder {
       });
 
       if (existing) {
-        console.log(
-          `[RolesSeed] Role "${roleData.name}" already exists, skipping`,
-        );
+        await roleRepo.update({ name: roleData.name }, roleData);
+        console.log(`[RolesSeed] Updated role: ${roleData.name}`);
         continue;
       }
 

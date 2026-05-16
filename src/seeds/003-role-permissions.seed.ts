@@ -13,21 +13,25 @@ export class RolePermissionsSeed implements Seeder {
     const roleRepo = dataSource.getRepository(Role);
     const policyRepo = dataSource.getRepository(Policy);
 
-    const permissions: Array<{ key: PermissionKey; description: string }> = [
+    const permissions: Partial<Permission>[] = [
       { key: 'role:read', description: 'Read roles' },
       { key: 'role:list', description: 'List roles' },
       { key: 'role:create', description: 'Create roles' },
       { key: 'role:update', description: 'Update roles' },
       { key: 'role:delete', description: 'Delete roles' },
       { key: 'role:assign', description: 'Assign roles to users' },
-      { key: 'role:*', description: 'All role actions' },
+      { key: 'role:*', description: 'All role actions', assignable: false },
       { key: 'permission:read', description: 'Read permissions' },
       { key: 'permission:list', description: 'List permissions' },
       { key: 'permission:create', description: 'Create permissions' },
       { key: 'permission:update', description: 'Update permissions' },
       { key: 'permission:delete', description: 'Delete permissions' },
       { key: 'permission:assign', description: 'Assign permissions to roles' },
-      { key: 'permission:*', description: 'All permission actions' },
+      {
+        key: 'permission:*',
+        description: 'All permission actions',
+        assignable: false,
+      },
     ];
 
     const savedPermissions: Permission[] = [];
@@ -37,9 +41,8 @@ export class RolePermissionsSeed implements Seeder {
         where: { key: perm.key },
       });
       if (existing) {
-        console.log(
-          `[RolePermissionsSeed] Permission "${perm.key}" already exists, skipping`,
-        );
+        await permissionRepo.update({ key: perm.key }, perm);
+        console.log(`[RolePermissionsSeed] Updated permission: ${perm.key}`);
         savedPermissions.push(existing);
         continue;
       }
@@ -214,7 +217,13 @@ export class RolePermissionsSeed implements Seeder {
       });
 
       if (existing) {
-        console.log(`[RolePermissionsSeed] Policy already exists, skipping`);
+        await policyRepo.update(
+          { roleId: policyData.roleId, permissionId: policyData.permissionId },
+          policyData,
+        );
+        console.log(
+          `[RolePermissionsSeed] Updated policy: ${policyData.roleId} -> ${policyData.permissionId}`,
+        );
         continue;
       }
 
