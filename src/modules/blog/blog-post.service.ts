@@ -12,7 +12,7 @@ import {
   PaginatedResponse,
   ResponseMeta,
 } from '@common/interfaces/response.interface';
-import { QueryBlogPostDto } from './dto/blog-post-query.dto';
+import { BlogPostQueryDto } from './dto/blog-post-query.dto';
 import {
   CreateBlogPostDto,
   UpdateBlogPostDto,
@@ -96,7 +96,7 @@ export class BlogPostService {
     return $.html();
   }
 
-  async findAll(query: QueryBlogPostDto): Promise<PaginatedResponse<BlogPost>> {
+  async findAll(query: BlogPostQueryDto): Promise<PaginatedResponse<BlogPost>> {
     const { page, limit, search, tagId } = query;
 
     const queryBuilder = this.postRepo

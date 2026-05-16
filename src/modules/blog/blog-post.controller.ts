@@ -21,7 +21,7 @@ import {
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { UpdateBlogPostTagsDto } from './dto/update-blog-post-tags.dto';
-import { QueryBlogPostDto } from './dto/blog-post-query.dto';
+import { BlogPostQueryDto } from './dto/blog-post-query.dto';
 import { IdParamDto } from '@/common/dto/id-param.dto';
 import { Public } from '@/common/decorators/public.decorator';
 import { RequirePermissions } from '@/common/decorators/require-permissions.decorator';
@@ -54,7 +54,7 @@ export class BlogPostController {
 
   @Public()
   @Get()
-  findAll(@Query() query: QueryBlogPostDto) {
+  findAll(@Query() query: BlogPostQueryDto) {
     return this.service.findAll(query);
   }
 

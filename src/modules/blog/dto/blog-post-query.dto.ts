@@ -3,7 +3,7 @@ import { PaginationDto } from '@common/dto/pagination.dto';
 import { SortOrder } from '@common/enums/sort-order.enum';
 import { ToUpperCase } from '@common/decorators/to-uppercase.decorator';
 
-export class QueryBlogPostDto extends PaginationDto {
+export class BlogPostQueryDto extends PaginationDto {
   @IsOptional()
   @IsString()
   search?: string;
