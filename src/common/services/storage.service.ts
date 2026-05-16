@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
+  S3ClientConfig,
   PutObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
@@ -19,7 +20,9 @@ export class StorageService implements IStorageService {
   private readonly publicUrl: string;
 
   constructor(private configService: ConfigService) {
-    this.s3Client = new S3Client({
+    const endpoint = this.configService.get<string>('AWS_ENDPOINT');
+
+    const clientConfig: S3ClientConfig = {
       region: this.configService.getOrThrow<string>('AWS_REGION'),
       credentials: {
         accessKeyId: this.configService.getOrThrow<string>('AWS_ACCESS_KEY_ID'),
@@ -27,7 +30,14 @@ export class StorageService implements IStorageService {
           'AWS_SECRET_ACCESS_KEY',
         ),
       },
-    });
+    };
+
+    if (endpoint) {
+      clientConfig.endpoint = endpoint;
+      clientConfig.forcePathStyle = true;
+    }
+
+    this.s3Client = new S3Client(clientConfig);
     this.bucketName = this.configService.getOrThrow<string>('AWS_BUCKET_NAME');
     this.publicUrl = this.configService.getOrThrow<string>(
       'AWS_BUCKET_PUBLIC_URL',
