@@ -88,11 +88,11 @@ export class PermissionService implements BaseService<Permission> {
     requiredPermission: PermissionKey,
     userId: string,
     userRoles: string[],
-    resource: Record<string, any>,
+    resources: Record<string, Record<string, unknown>>,
   ): Promise<{ allowed: boolean; reason?: string }> {
     const context: PolicyEvaluationContext = {
       user: { id: userId, roles: userRoles },
-      resource,
+      resources,
       env: { time: new Date() },
     };
 

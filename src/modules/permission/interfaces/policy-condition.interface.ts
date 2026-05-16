@@ -17,8 +17,10 @@ export interface PolicyEvaluationContext {
     roles?: string[];
     [key: string]: unknown;
   };
-  resource: {
-    [key: string]: unknown;
+  resources: {
+    [key: string]: {
+      [key: string]: unknown;
+    };
   };
   env: {
     time: Date;

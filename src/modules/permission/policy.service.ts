@@ -68,7 +68,7 @@ export class PolicyService {
     // console.log('Evaluating policies for user:', context.user.id);
     // console.log('User Roles:', roles);
     // console.log('Required Permissions:', requiredPermissions);
-    // console.log('Loaded Policies:', policies);
+    // console.log('Loaded Policies:', JSON.stringify(policies, null, 2));
 
     // Normalize to array
     const permissionList = Array.isArray(requiredPermissions)
@@ -219,7 +219,7 @@ export class PolicyService {
     context: PolicyEvaluationContext,
   ): unknown {
     if (!field.startsWith('$')) {
-      return this.getNestedValue(context.resource, field);
+      return undefined;
     }
 
     const [source, ...pathParts] = field.slice(1).split('.');
@@ -230,8 +230,8 @@ export class PolicyService {
         return this.getNestedValue(context.user, path);
       case 'env':
         return this.getNestedValue(context.env, path);
-      case 'resource':
-        return this.getNestedValue(context.resource, path);
+      case 'resources':
+        return this.getNestedValue(context.resources, path);
       default:
         return undefined;
     }
@@ -250,6 +250,11 @@ export class PolicyService {
         return this.resolveDateFunction(value);
       }
       return value;
+    }
+
+    if (value.startsWith('$resources.')) {
+      const path = value.slice('$resources.'.length);
+      return this.getNestedValue(context.resources, path);
     }
 
     return this.resolveField(value, context);
@@ -332,5 +337,53 @@ export class PolicyService {
     }
 
     return this.create({ roleId, permissionId, ...data });
+  }
+
+  async extractResourceTypesFromConditions(
+    requiredPermissions: PermissionKey | PermissionKey[],
+    roles: string[],
+  ): Promise<string[]> {
+    const permissionList = Array.isArray(requiredPermissions)
+      ? requiredPermissions
+      : [requiredPermissions];
+
+    const allPolicies = await this.getPoliciesForRoles(roles);
+
+    const matchingPolicies = allPolicies.filter((policy) =>
+      permissionList.some((perm) =>
+        this.matchesPermissionKey(policy.permission.key, perm),
+      ),
+    );
+
+    const resourceTypes = new Set<string>();
+
+    for (const policy of matchingPolicies) {
+      if (policy.conditions) {
+        this.extractFromConditions(policy.conditions, resourceTypes);
+      }
+    }
+
+    return Array.from(resourceTypes);
+  }
+
+  private extractFromConditions(
+    conditions: PolicyConditions,
+    resourceTypes: Set<string>,
+  ): void {
+    for (const rule of conditions.rules) {
+      if ('operator' in rule) {
+        const field = rule.field;
+        if (field.startsWith('$resources.')) {
+          const match = field.match(/^\$resources\.(\w+)/);
+          if (match) {
+            resourceTypes.add(match[1]);
+          } else {
+            Logger.warn(`Cannot extract resource type from field: ${field}`);
+          }
+        }
+      } else {
+        this.extractFromConditions(rule, resourceTypes);
+      }
+    }
   }
 }

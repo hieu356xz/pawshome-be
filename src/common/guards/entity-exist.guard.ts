@@ -70,7 +70,11 @@ export function EntityExistGuard<T extends object, D extends Partial<T>>(
         throw new NotFoundException(`${entity.name} #${paramKey} not found`);
       }
 
-      request.resources = resource as Record<keyof T, unknown>;
+      const entityKey = entity.name.toLowerCase();
+      request.resources = {
+        ...(request.resources as Record<string, Record<string, unknown>>),
+        [entityKey]: resource,
+      } as Record<string, Record<string, unknown>>;
 
       return true;
     }

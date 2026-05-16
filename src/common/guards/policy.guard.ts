@@ -41,25 +41,32 @@ export class PolicyGuard implements CanActivate {
       throw new UnauthorizedException('User not authenticated');
     }
 
-    for (const requiredPerm of requiredPermissions) {
-      const resourceType = this.extractResourceType(requiredPerm);
-      const params = request.params as Record<string, string>;
-      const resourceIdParam = params?.id;
+    const userRoles = user.roles || [];
+    const resourceTypes =
+      await this.policyService.extractResourceTypesFromConditions(
+        requiredPermissions,
+        userRoles,
+      );
 
-      let resource: Record<string, unknown> = {};
+    const resources = request.resources || {};
+    const params = request.params as Record<string, string>;
 
-      if (request.resources) {
-        resource = request.resources;
-      } else if (resourceIdParam) {
-        const loaded = await this.loadResource(resourceType, resourceIdParam);
-        if (loaded) {
-          resource = loaded as Record<string, unknown>;
+    for (const resourceType of resourceTypes) {
+      if (!resources[resourceType]) {
+        const resourceIdParam = params?.id;
+        if (resourceIdParam) {
+          const loaded = await this.loadResource(resourceType, resourceIdParam);
+          if (loaded) {
+            resources[resourceType] = loaded as Record<string, unknown>;
+          }
         }
       }
+    }
 
+    for (const requiredPerm of requiredPermissions) {
       const result = await this.policyService.checkAccess(requiredPerm, {
-        user: { id: user.userId, roles: user.roles },
-        resource,
+        user: { id: user.userId, roles: userRoles },
+        resources,
         env: { time: new Date() },
       });
 
@@ -71,21 +78,13 @@ export class PolicyGuard implements CanActivate {
     return true;
   }
 
-  private extractResourceType(permissionKey: PermissionKey): string {
-    const parts = permissionKey.split(':');
-    return parts[0] || 'unknown';
-  }
-
   private async loadResource(type: string, id: string): Promise<unknown> {
     const serviceName = type.toUpperCase() + '_' + SERVICE_SUFFIX;
-    // console.log(
-    //   `Attempting to load resource of type ${type} with ID ${id} using service ${serviceName}`,
-    // );
+
     try {
       const service = this.moduleRef.get<BaseService>(serviceName, {
         strict: false,
       });
-      // console.log(`Service found: ${service.constructor.name}`);
 
       if (!service || typeof service.findOne !== 'function') {
         return null;

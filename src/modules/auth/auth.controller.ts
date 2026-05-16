@@ -18,6 +18,7 @@ import { Public } from '@common/decorators/public.decorator';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import type { UserPayload } from './interfaces/user-payload.interface';
 import { ConfigService } from '@nestjs/config';
+import { GoogleUser } from './interfaces/google-user.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -55,12 +56,8 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   async googleAuthCallback(@Req() req: Request, @Res() response: Response) {
-    const googleUser = req.user as {
-      googleId: string;
-      email: string;
-      fullName: string;
-      avatarUrl: string | null;
-    };
+    // user return from google
+    const googleUser = req.user as unknown as GoogleUser;
 
     const result = await this.authService.googleAuth(googleUser, response);
 
