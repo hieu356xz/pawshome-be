@@ -1,0 +1,24 @@
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto">
+  <h2>Your Adoption Request Has Been Reviewed</h2>
+  <p>Dear {{applicantName}},</p>
+  <p>Thank you for your interest in adopting <strong>{{petName}}</strong>.</p>
+  <p>
+    Unfortunately, after careful consideration, we are unable to proceed with
+    your adoption request at this time.
+  </p>
+  <p style="background-color: #fee2e2; padding: 16px; border-radius: 8px">
+    <strong>Reason:</strong> {{rejectionReason}}
+  </p>
+  {{#if rejectionNote}}
+  <p style="background-color: #f3f4f6; padding: 16px; border-radius: 8px">
+    <strong>Note:</strong> {{rejectionNote}}
+  </p>
+  {{/if}}
+  <p>
+    We encourage you to apply for other pets available for adoption on our
+    platform.
+  </p>
+  <p>If you have any questions, please feel free to contact us.</p>
+  <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0" />
+  <p style="color: #666; font-size: 12px">Best regards,<br />Pawshome Team</p>
+</div>

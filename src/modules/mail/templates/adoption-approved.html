@@ -1,0 +1,17 @@
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto">
+  <h2>Your Adoption Request Has Been Approved!</h2>
+  <p>Dear {{applicantName}},</p>
+  <p>
+    Great news! Your adoption request for <strong>{{petName}}</strong> has been
+    approved.
+  </p>
+  {{#approvalMessage}}
+  <p style="background-color: #f3f4f6; padding: 16px; border-radius: 8px">
+    {{approvalMessage}}
+  </p>
+  {{/approvalMessage}}
+  <p>Our team will contact you shortly to arrange the next steps.</p>
+  <p>If you have any questions, please don't hesitate to reach out to us.</p>
+  <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0" />
+  <p style="color: #666; font-size: 12px">Best regards,<br />Pawshome Team</p>
+</div>

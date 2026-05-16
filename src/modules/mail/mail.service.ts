@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import * as fs from 'fs';
 import * as path from 'path';
+import Handlebars from 'handlebars';
 
 export interface SendMailOptions {
   to: string;
@@ -14,7 +15,7 @@ export interface SendTemplateMailOptions {
   to: string;
   subject: string;
   template: string;
-  variables: Record<string, string>;
+  variables: Record<string, unknown>;
 }
 
 @Injectable()
@@ -59,16 +60,13 @@ export class MailService {
 
   private renderTemplate(
     templateName: string,
-    variables: Record<string, string>,
+    variables: Record<string, unknown>,
   ): string {
     const templatePath = path.join(this.templateDir, `${templateName}.html`);
 
-    let template = fs.readFileSync(templatePath, 'utf-8');
+    const template = fs.readFileSync(templatePath, 'utf-8');
+    const compiled = Handlebars.compile(template);
 
-    for (const [key, value] of Object.entries(variables)) {
-      template = template.replace(new RegExp(`{{${key}}}`, 'g'), value);
-    }
-
-    return template;
+    return compiled(variables);
   }
 }

@@ -11,6 +11,7 @@ import {
 import { Pet } from '@modules/pet/entities/pet.entity';
 import { User } from '@modules/user/entities/user.entity';
 import { AdoptionRequestStatus } from '../enums/adoption-request-status.enum';
+import { RejectionReason } from '../enums/rejection-reason.enum';
 
 @Entity('adoption_requests')
 export class AdoptionRequest {
@@ -77,8 +78,19 @@ export class AdoptionRequest {
   @Column({ name: 'commitment', type: 'text', nullable: true })
   commitment!: string | null;
 
-  @Column({ name: 'rejection_reason', type: 'text', nullable: true })
-  rejectionReason!: string | null;
+  @Column({
+    name: 'rejection_reason',
+    type: 'enum',
+    enum: RejectionReason,
+    nullable: true,
+  })
+  rejectionReason!: RejectionReason | null;
+
+  @Column({ name: 'approval_message', type: 'text', nullable: true })
+  approvalMessage!: string | null;
+
+  @Column({ name: 'rejection_note', type: 'text', nullable: true })
+  rejectionNote!: string | null;
 
   @Column({ name: 'reviewed_by', type: 'text', nullable: true })
   reviewedBy!: string | null;

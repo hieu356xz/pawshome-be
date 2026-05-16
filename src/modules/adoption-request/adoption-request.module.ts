@@ -9,6 +9,7 @@ import { AdoptionRequest } from './entities/adoption-request.entity';
 import { PetService } from '../pet/pet.service';
 import { PetModule } from '../pet/pet.module';
 import { SERVICE_SUFFIX } from '@/common/interfaces/base-service.interface';
+import { MailService } from '../mail/mail.service';
 
 const ADOPTIONREQUEST_SERVICE = `ADOPTIONREQUEST_${SERVICE_SUFFIX}`;
 
@@ -16,6 +17,7 @@ const ADOPTIONREQUEST_SERVICE = `ADOPTIONREQUEST_${SERVICE_SUFFIX}`;
   imports: [
     TypeOrmModule.forFeature([AdoptionRequest]),
     forwardRef(() => PetModule),
+    MailService,
   ],
   controllers: [AdoptionRequestController, AdoptionRequestAdminController],
   providers: [

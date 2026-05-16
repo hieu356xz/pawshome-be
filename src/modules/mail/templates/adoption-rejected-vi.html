@@ -1,0 +1,24 @@
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto">
+  <h2>Yêu cầu nhận nuôi của bạn đã được xem xét</h2>
+  <p>Kính gửi {{applicantName}},</p>
+  <p>Cảm ơn bạn đã quan tâm đến việc nhận nuôi <strong>{{petName}}</strong>.</p>
+  <p>
+    Rất tiếc, sau khi xem xét kỹ lưỡng, chúng tôi không thể tiếp tục xử lý yêu
+    cầu nhận nuôi của bạn vào lúc này.
+  </p>
+  <p style="background-color: #fee2e2; padding: 16px; border-radius: 8px">
+    <strong>Lý do:</strong> {{rejectionReason}}
+  </p>
+  {{#if rejectionNote}}
+  <p style="background-color: #f3f4f6; padding: 16px; border-radius: 8px">
+    <strong>Ghi chú:</strong> {{rejectionNote}}
+  </p>
+  {{/if}}
+  <p>
+    Chúng tôi khuyến khích bạn nộp đơn cho các thú cưng khác có sẵn trên nền
+    tảng của chúng tôi.
+  </p>
+  <p>Nếu bạn có bất kỳ câu hỏi nào, hãy liên hệ với chúng tôi.</p>
+  <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0" />
+  <p style="color: #666; font-size: 12px">Trân trọng,<br />Đội ngũ Pawshome</p>
+</div>
