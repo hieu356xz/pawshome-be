@@ -138,7 +138,10 @@ export class PolicyGuard implements CanActivate {
   }
 
   private async loadResource(type: string, id: string): Promise<unknown> {
-    const serviceName = type.toUpperCase() + '_' + SERVICE_SUFFIX;
+    // for example: '$resources.medical-record.userId' from a policy, where medical-record is the resource type will be converted into MEDICALRECORD + _SERVICE
+    // the service string must be defined in the module like this format 'MEDICALRECORD_SERVICE' for this method to works
+    const cleanType = type.replace(/[-_]/g, '').toUpperCase();
+    const serviceName = cleanType + '_' + SERVICE_SUFFIX;
 
     try {
       const service = this.moduleRef.get<BaseService>(serviceName, {
