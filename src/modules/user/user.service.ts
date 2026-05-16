@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -20,6 +21,7 @@ import {
   PaginatedResponse,
   ResponseMeta,
 } from '@common/interfaces/response.interface';
+import { UserStatus } from './enums/user-status.enum';
 
 const ROLE_HIERARCHY: Record<string, number> = {
   admin: 1,
@@ -88,6 +90,7 @@ export class UserService implements BaseService<User> {
       relations: ['roles', 'roles.permissions'],
       take: limit,
       skip: (page - 1) * limit,
+      withDeleted: true,
     });
 
     const meta: ResponseMeta = {
@@ -188,6 +191,36 @@ export class UserService implements BaseService<User> {
 
     targetUser.roles = roles;
     return this.userRepo.save(targetUser);
+  }
+
+  async banUser(id: string, reason: string | undefined, adminId: string) {
+    const user = await this.findOne(id);
+
+    if (user.status === UserStatus.BANNED) {
+      throw new ConflictException('User is already banned');
+    }
+
+    user.status = UserStatus.BANNED;
+    user.bannedAt = new Date();
+    user.banReason = reason ?? null;
+    user.bannedBy = adminId;
+
+    return this.userRepo.save(user);
+  }
+
+  async unbanUser(id: string) {
+    const user = await this.findOne(id);
+
+    if (user.status !== UserStatus.BANNED) {
+      throw new ConflictException('User is not banned');
+    }
+
+    user.status = UserStatus.ACTIVE;
+    user.bannedAt = null;
+    user.banReason = null;
+    user.bannedBy = null;
+
+    return this.userRepo.save(user);
   }
 
   protected async isUserExist(id: string) {

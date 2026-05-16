@@ -50,6 +50,7 @@ export class UserPermissionsSeed implements Seeder {
       { key: 'user:update', description: 'Update users' },
       { key: 'user:delete', description: 'Delete users' },
       { key: 'user:list', description: 'List users' },
+      { key: 'user:ban', description: 'Ban users' },
       { key: 'user:*', description: 'All user actions', assignable: false },
     ];
 
@@ -103,6 +104,7 @@ export class UserPermissionsSeed implements Seeder {
         'user:update',
         'user:delete',
         'user:list',
+        'user:ban',
       ],
       manager: [
         'user:create',
@@ -110,8 +112,9 @@ export class UserPermissionsSeed implements Seeder {
         'user:update',
         'user:delete',
         'user:list',
+        'user:ban',
       ],
-      staff: ['user:read', 'user:list'],
+      staff: ['user:read', 'user:list', 'user:ban'],
       veterinarian: ['user:read', 'user:update'],
       member: ['user:read', 'user:update'],
       volunteer: ['user:read', 'user:update'],

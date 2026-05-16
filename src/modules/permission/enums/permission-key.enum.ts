@@ -25,6 +25,7 @@ export const ACTIONS = [
   'delete',
   'list',
   'assign',
+  'ban',
 ] as const;
 
 export type Action = (typeof ACTIONS)[number];

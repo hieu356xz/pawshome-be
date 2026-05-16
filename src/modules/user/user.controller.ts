@@ -13,6 +13,7 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AssignRolesDto } from './dto/assign-roles.dto';
+import { BanUserDto } from './dto/ban-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 import { RequirePermissions } from '@/common/decorators/require-permissions.decorator';
 import { IdParamDto } from '@/common/dto/id-param.dto';
@@ -107,5 +108,37 @@ export class UserController {
     @CurrentUser() user: UserPayload,
   ) {
     return this.service.assignRoles(id, data.roleIds, user.userId);
+  }
+
+  @Post(':id/ban')
+  @UseGuards(
+    EntityExistGuard(User, {
+      source: 'params',
+      sourceField: 'id',
+      dto: IdParamDto,
+    }),
+    PolicyGuard,
+  )
+  @RequirePermissions('user:ban')
+  ban(
+    @Param() { id }: IdParamDto,
+    @Body() data: BanUserDto,
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.service.banUser(id, data.reason, user.userId);
+  }
+
+  @Post(':id/unban')
+  @UseGuards(
+    EntityExistGuard(User, {
+      source: 'params',
+      sourceField: 'id',
+      dto: IdParamDto,
+    }),
+    PolicyGuard,
+  )
+  @RequirePermissions('user:ban')
+  unban(@Param() { id }: IdParamDto) {
+    return this.service.unbanUser(id);
   }
 }

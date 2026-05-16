@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { Role } from '@modules/role/entities/role.entity';
 import { UserStatus } from '../enums/user-status.enum';
-import { Exclude } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 
 @Entity('users')
 export class User {
@@ -53,6 +53,15 @@ export class User {
   @Exclude({ toPlainOnly: true })
   googleId!: string;
 
+  @Column({ name: 'banned_at', type: 'date', nullable: true })
+  bannedAt!: Date | null;
+
+  @Column({ name: 'ban_reason', type: 'text', nullable: true })
+  banReason!: string | null;
+
+  @Column({ name: 'banned_by', type: 'text', nullable: true })
+  bannedBy!: string | null;
+
   @ManyToMany(() => Role)
   @JoinTable({
     name: 'user_roles',
@@ -70,4 +79,9 @@ export class User {
   @DeleteDateColumn({ name: 'deleted_at', nullable: true })
   @Exclude({ toPlainOnly: true })
   deletedAt!: Date | null;
+
+  @Expose()
+  get isDeleted(): boolean {
+    return this.deletedAt !== null;
+  }
 }

@@ -1,11 +1,14 @@
 import {
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from '@common/decorators/public.decorator';
+import { UserStatus } from '@modules/user/enums/user-status.enum';
+import type { UserPayload } from '../interfaces/user-payload.interface';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -22,7 +25,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     try {
       const result = await super.canActivate(context);
       if (typeof result === 'boolean') return result;
-      return true; // Should not happen with passport but for safety
+      return true;
     } catch (err) {
       if (isPublic) {
         return true;
@@ -39,6 +42,12 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   ): TUser {
     if (err || !user) {
       throw err || new UnauthorizedException('Authentication required');
+    }
+
+    const payload = user as unknown as UserPayload;
+
+    if (payload.status === UserStatus.BANNED) {
+      throw new ForbiddenException('Account is banned');
     }
 
     return user;
