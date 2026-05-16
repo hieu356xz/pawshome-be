@@ -1,10 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import {
+  Repository,
+  In,
+  FindOptionsWhere,
+  FindOptionsOrder,
+  Like,
+} from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { Role } from '@modules/role/entities/role.entity';
-import { PaginationDto } from '@common/dto/pagination.dto';
+import { UserQueryDto } from './dto/user-query.dto';
 import {
   PaginatedResponse,
   ResponseMeta,
@@ -17,10 +23,36 @@ export class UserService {
     private userRepo: Repository<User>,
   ) {}
 
-  async findAll(query: PaginationDto): Promise<PaginatedResponse<User>> {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 10;
+  async findAll(query: UserQueryDto): Promise<PaginatedResponse<User>> {
+    const { page, limit, status, email, name, roleId, sortBy, sortOrder } =
+      query;
+
+    const where: FindOptionsWhere<User> = {};
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (email) {
+      where.email = Like(`%${email}%`);
+    }
+
+    if (name) {
+      where.fullName = Like(`%${name}%`);
+    }
+
+    if (roleId) {
+      where.roles = { id: roleId };
+    }
+
+    const order: FindOptionsOrder<User> = {};
+    if (sortBy) {
+      order[sortBy] = sortOrder ?? 'ASC';
+    }
+
     const [results, total] = await this.userRepo.findAndCount({
+      where,
+      order,
       relations: ['roles', 'roles.permissions'],
       take: limit,
       skip: (page - 1) * limit,

@@ -12,14 +12,14 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto/update-user.dto';
 import { AssignRolesDto } from './dto/assign-roles.dto';
-import { PaginationDto } from '@common/dto/pagination.dto';
+import { UserQueryDto } from './dto/user-query.dto';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly service: UserService) {}
 
   @Get()
-  findAll(@Query() query: PaginationDto) {
+  findAll(@Query() query: UserQueryDto) {
     return this.service.findAll(query);
   }
 
