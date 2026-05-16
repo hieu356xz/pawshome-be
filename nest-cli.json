@@ -6,8 +6,7 @@
     "deleteOutDir": true,
     "assets": [
       "modules/mail/templates/**/*"
-    ],
-    "webpack": true
+    ]
   },
   "generateOptions": {
     "baseDir": "modules"
