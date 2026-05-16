@@ -8,6 +8,7 @@ import {
 } from 'class-validator';
 import { PetGender } from '../enums/pet-gender.enum';
 import { PetAgeGroup } from '../enums/pet-age-group.enum';
+import { AdoptionStatus } from '../enums/adoption-status.enum';
 
 export class CreatePetDto {
   @IsString()
@@ -33,6 +34,9 @@ export class CreatePetDto {
 
   @IsOptional()
   weight?: number;
+
+  @IsEnum(AdoptionStatus)
+  adoptionStatus!: AdoptionStatus;
 
   @IsOptional()
   @IsString()
