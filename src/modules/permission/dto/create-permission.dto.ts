@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsString } from 'class-validator';
 import type { PermissionKey } from '../enums/permission-key.enum';
 
 export class CreatePermissionDto {
@@ -8,4 +8,7 @@ export class CreatePermissionDto {
 
   @IsString()
   description!: string;
+
+  @IsBoolean()
+  assignable!: boolean;
 }
