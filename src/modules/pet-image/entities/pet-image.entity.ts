@@ -6,6 +6,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { Pet } from '@modules/pet/entities/pet.entity';
 
 @Entity('pet_images')
@@ -23,6 +24,7 @@ export class PetImage {
   @Column({ name: 'image_url' })
   imageUrl!: string;
 
+  @Exclude({ toPlainOnly: true })
   @Column({ type: 'vector', length: 1536, nullable: true })
   embedding!: number[] | null;
 

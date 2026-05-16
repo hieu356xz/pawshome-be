@@ -4,18 +4,31 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, FindOptionsOrder, ILike } from 'typeorm';
+import {
+  Repository,
+  FindOptionsWhere,
+  FindOptionsOrder,
+  ILike,
+  In,
+} from 'typeorm';
 import { Pet } from './entities/pet.entity';
 import { PetQueryDto } from './dto/pet-query.dto';
+import { PetSearchDto } from './dto/pet-search.dto';
 import { Species } from '@modules/species/entities/species.entity';
 import { Breed } from '@modules/breed/entities/breed.entity';
 import { PetGender } from './enums/pet-gender.enum';
 import { PetAgeGroup } from './enums/pet-age-group.enum';
 import { AdoptionStatus } from './enums/adoption-status.enum';
+import { EmbeddingService } from '@modules/embedding/embedding.service';
 import {
   PaginatedResponse,
   ResponseMeta,
 } from '@common/interfaces/response.interface';
+
+export interface PetSearchResult {
+  pet: Pet;
+  similarityScore: number;
+}
 
 type CreatePetData = {
   name: string;
@@ -49,6 +62,7 @@ export class PetService {
   constructor(
     @InjectRepository(Pet)
     private petRepo: Repository<Pet>,
+    private embeddingService: EmbeddingService,
   ) {}
 
   async findAll(query: PetQueryDto): Promise<PaginatedResponse<Pet>> {
@@ -102,7 +116,7 @@ export class PetService {
       order,
       take: limit,
       skip: (page - 1) * limit,
-      relations: ['species', 'breed'],
+      relations: ['species', 'breed', 'images'],
     });
 
     const meta: ResponseMeta = {
@@ -119,7 +133,7 @@ export class PetService {
   async findOne(id: string): Promise<Pet | null> {
     const pet = await this.petRepo.findOne({
       where: { id },
-      relations: ['species', 'breed'],
+      relations: ['species', 'breed', 'images'],
     });
     if (!pet) throw new NotFoundException(`Pet #${id} not found`);
     return pet;
@@ -128,7 +142,7 @@ export class PetService {
   async findOneByPetCode(petCode: string): Promise<Pet | null> {
     const pet = await this.petRepo.findOne({
       where: { petCode },
-      relations: ['species', 'breed'],
+      relations: ['species', 'breed', 'images'],
     });
     if (!pet)
       throw new NotFoundException(`Pet with code "${petCode}" not found`);
@@ -214,7 +228,7 @@ export class PetService {
     await this.petRepo.update(id, data);
     return this.petRepo.findOne({
       where: { id },
-      relations: ['species', 'breed'],
+      relations: ['species', 'breed', 'images'],
     });
   }
 
@@ -229,5 +243,111 @@ export class PetService {
 
   public async isPetExist(id: string) {
     return this.petRepo.exists({ where: { id } });
+  }
+
+  async search(
+    imageBase64: string | undefined,
+    imageMimeType: string | undefined,
+    query: PetSearchDto,
+  ): Promise<PaginatedResponse<PetSearchResult>> {
+    const hasImage = !!imageBase64 && !!imageMimeType;
+    const hasText = !!query.text;
+
+    if (!hasImage && !hasText) {
+      throw new BadRequestException('Either image or text must be provided');
+    }
+
+    const embedding = await this.embeddingService.embed({
+      imageBase64: hasImage ? imageBase64 : undefined,
+      imageMimeType: hasImage ? imageMimeType : undefined,
+      text: hasText ? query.text : undefined,
+    });
+
+    const vectorStr = `[${embedding.join(',')}]`;
+    const {
+      page,
+      limit,
+      speciesId,
+      breedId,
+      gender,
+      ageGroup,
+      adoptionStatus,
+    } = query;
+
+    const qb = this.petRepo
+      .createQueryBuilder('pet')
+      .innerJoin('pet_images', 'pi', 'pi.pet_id = pet.id')
+      .where('pi.embedding IS NOT NULL');
+
+    if (speciesId) {
+      qb.andWhere('pet.species_id = :speciesId', { speciesId });
+    }
+    if (breedId) {
+      qb.andWhere('pet.breed_id = :breedId', { breedId });
+    }
+    if (gender) {
+      qb.andWhere('pet.gender = :gender', { gender });
+    }
+    if (ageGroup) {
+      qb.andWhere('pet.age_group = :ageGroup', { ageGroup });
+    }
+    if (adoptionStatus) {
+      qb.andWhere('pet.adoption_status = :adoptionStatus', { adoptionStatus });
+    }
+
+    const total = await qb.clone().select('DISTINCT pet.id').getCount();
+
+    const rawResults = await qb
+      .select([
+        'pet.id as id',
+        `MAX(1 - (pi.embedding <=> '${vectorStr}'::vector)) as similarity`,
+      ])
+      .groupBy('pet.id')
+      .orderBy(`MAX(1 - (pi.embedding <=> '${vectorStr}'::vector))`, 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getRawMany<{ id: string; similarity: number }>();
+
+    const petIds = rawResults.map((r) => r.id);
+
+    if (petIds.length === 0) {
+      const meta: ResponseMeta = {
+        totalItems: 0,
+        itemCount: 0,
+        itemsPerPage: limit,
+        totalPages: 0,
+        currentPage: page,
+      };
+      return { results: [], meta };
+    }
+
+    const pets = await this.petRepo.find({
+      where: { id: In(petIds) } as FindOptionsWhere<Pet>,
+      relations: ['species', 'breed', 'images'],
+    });
+
+    const petMap = new Map(pets.map((p) => [p.id, p]));
+    const similarityMap = new Map(rawResults.map((r) => [r.id, r.similarity]));
+
+    const results: PetSearchResult[] = petIds
+      .map((id) => {
+        const pet = petMap.get(id);
+        if (!pet) return null;
+        return {
+          pet,
+          similarityScore: similarityMap.get(id) ?? 0,
+        };
+      })
+      .filter((r): r is PetSearchResult => r !== null);
+
+    const meta: ResponseMeta = {
+      totalItems: total,
+      itemCount: results.length,
+      itemsPerPage: limit,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+    };
+
+    return { results, meta };
   }
 }
