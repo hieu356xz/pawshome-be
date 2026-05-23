@@ -10,16 +10,19 @@ import {
 import { PetGender } from '../enums/pet-gender.enum';
 import { PetAgeGroup } from '../enums/pet-age-group.enum';
 import { AdoptionStatus } from '../enums/adoption-status.enum';
+import { Type } from 'class-transformer';
 
 export class CreatePetDto {
   @IsString()
   @IsNotEmpty()
   name!: string;
 
+  @Type(() => Number)
   @IsNumber()
   speciesId!: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   breedId?: number;
 

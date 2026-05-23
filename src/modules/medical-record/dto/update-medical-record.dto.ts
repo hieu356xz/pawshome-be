@@ -8,6 +8,7 @@ import {
 } from 'class-validator';
 import { MedicalRecordType } from '../enums/medical-record-type.enum';
 import { Currency } from '../enums/currency.enum';
+import { Type } from 'class-transformer';
 
 export class UpdateMedicalRecordDto {
   @IsOptional()
@@ -23,6 +24,7 @@ export class UpdateMedicalRecordDto {
   recordDate?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   cost?: number;
 

@@ -6,6 +6,7 @@ import { PetGender } from '../enums/pet-gender.enum';
 import { PetAgeGroup } from '../enums/pet-age-group.enum';
 import { AdoptionStatus } from '../enums/adoption-status.enum';
 import { ToUpperCase } from '@/common/decorators/to-uppercase.decorator';
+import { Type } from 'class-transformer';
 
 export class PetQueryDto extends PaginationDto {
   @IsOptional()
@@ -13,10 +14,12 @@ export class PetQueryDto extends PaginationDto {
   petCode?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   speciesId?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   breedId?: number;
 
