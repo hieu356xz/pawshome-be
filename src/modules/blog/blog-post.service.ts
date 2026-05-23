@@ -20,6 +20,8 @@ import {
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { BlogPostStatus } from './enums/blog-post-status.enum';
+import { UserPayload } from '../auth/interfaces/user-payload.interface';
+import { PermissionService } from '../permission/permission.service';
 
 @Injectable()
 export class BlogPostService {
@@ -32,6 +34,7 @@ export class BlogPostService {
     private commentRepo: Repository<BlogPostComment>,
     private tagService: BlogTagService,
     private storageService: StorageService,
+    private permissionService: PermissionService,
   ) {}
 
   private slugify(text: string): string {
@@ -157,9 +160,19 @@ export class BlogPostService {
     return post;
   }
 
-  async findBySlug(slug: string): Promise<BlogPost | null> {
+  async findBySlug(slug: string, user?: UserPayload): Promise<BlogPost | null> {
+    const permissions = user
+      ? await this.permissionService.getPermissionsForRoles(user.roles)
+      : [];
+    const canViewDraft = this.permissionService.matchesPermission(
+      permissions,
+      'blog:list',
+    );
     const post = await this.postRepo.findOne({
-      where: { slug, status: BlogPostStatus.PUBLISHED },
+      where: {
+        slug,
+        ...(canViewDraft ? {} : { status: BlogPostStatus.PUBLISHED }),
+      },
       relations: ['tags', 'user'],
     });
 

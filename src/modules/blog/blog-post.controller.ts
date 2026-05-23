@@ -65,8 +65,11 @@ export class BlogPostController {
 
   @Public()
   @Get(':slug')
-  async findBySlug(@Param('slug') slug: string) {
-    const post = await this.service.findBySlug(slug);
+  async findBySlug(
+    @Param('slug') slug: string,
+    @CurrentUser() user?: UserPayload,
+  ) {
+    const post = await this.service.findBySlug(slug, user);
     if (!post) throw new NotFoundException('Post not found');
     return post;
   }
