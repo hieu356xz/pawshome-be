@@ -15,6 +15,7 @@ import { AdoptionRequestModule } from './modules/adoption-request/adoption-reque
 import { PetPostModule } from './modules/pet-post/pet-post.module';
 import { BlogModule } from './modules/blog/blog.module';
 import { MailModule } from './modules/mail/mail.module';
+import { DonationModule } from './modules/donation/donation.module';
 import databaseConfig from './config/database.config';
 
 @Module({
@@ -42,6 +43,7 @@ import databaseConfig from './config/database.config';
     PetPostModule,
     BlogModule,
     MailModule,
+    DonationModule,
   ],
   controllers: [],
   providers: [],
