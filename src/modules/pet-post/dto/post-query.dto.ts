@@ -24,6 +24,10 @@ export class PetPostQueryDto extends PaginationDto {
 
   @IsOptional()
   @IsString()
+  userId?: string;
+
+  @IsOptional()
+  @IsString()
   sortBy?: string;
 
   @IsOptional()
