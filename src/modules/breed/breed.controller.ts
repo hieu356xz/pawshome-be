@@ -18,17 +18,19 @@ import { RequirePermissions } from '@/common/decorators/require-permissions.deco
 import { PolicyGuard } from '@/common/guards/policy.guard';
 import { EntityExistGuard } from '@/common/guards/entity-exist.guard';
 import { Breed } from './entities/breed.entity';
+import { Public } from '@/common/decorators/public.decorator';
 
 @Controller('breeds')
 export class BreedController {
   constructor(private readonly service: BreedService) {}
 
+  @Public()
   @Get()
-  @RequirePermissions('breed:list')
   findAll(@Query() query: BreedQueryDto) {
     return this.service.findAll(query);
   }
 
+  @Public()
   @Get(':id')
   @UseGuards(
     EntityExistGuard(Breed, {
@@ -38,7 +40,6 @@ export class BreedController {
     }),
     PolicyGuard,
   )
-  @RequirePermissions('breed:read')
   findOne(@Param() { id }: NumberIdParamDto) {
     return this.service.findOne(id);
   }

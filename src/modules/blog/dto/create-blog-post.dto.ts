@@ -47,4 +47,9 @@ export class UpdateBlogPostDto {
   @IsOptional()
   @IsEnum(BlogPostStatus)
   status?: BlogPostStatus;
+
+  @IsOptional()
+  @IsArray()
+  @IsNumber({}, { each: true })
+  tagIds?: number[];
 }

@@ -19,6 +19,10 @@ export class BlogPostQueryDto extends PaginationDto {
 
   @IsOptional()
   @IsString()
+  userId?: string;
+
+  @IsOptional()
+  @IsString()
   sortBy?: string;
 
   @IsOptional()

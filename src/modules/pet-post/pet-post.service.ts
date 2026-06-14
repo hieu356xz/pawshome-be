@@ -46,6 +46,7 @@ export class PetPostService implements BaseService {
       postStatus,
       location,
       search,
+      userId,
       sortBy,
       sortOrder,
     } = query;
@@ -65,6 +66,8 @@ export class PetPostService implements BaseService {
       queryBuilder.andWhere('post.location ILIKE :location', {
         location: `%${location}%`,
       });
+    if (userId)
+      queryBuilder.andWhere('post.userId = :userId', { userId });
 
     if (search) {
       queryBuilder.andWhere(

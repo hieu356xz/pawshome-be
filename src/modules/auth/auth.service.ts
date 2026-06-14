@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ConflictException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -15,6 +16,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { TokenPayload } from './interfaces/user-payload.interface';
 import { AuthResponseDto } from './dto/token-response.dto';
 import { GoogleUser } from './interfaces/google-user.interface';
@@ -203,6 +205,34 @@ export class AuthService {
 
   async getCurrentUser(userId: string): Promise<User> {
     return this.userService.findOne(userId);
+  }
+
+  async changePassword(
+    userId: string,
+    dto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    const user = await this.userService.findOne(userId);
+
+    if (user.password) {
+      if (!dto.oldPassword) {
+        throw new BadRequestException('Current password is required');
+      }
+
+      const isPasswordValid = await this.userService.validatePassword(
+        dto.oldPassword,
+        user.password,
+      );
+
+      if (!isPasswordValid) {
+        throw new BadRequestException('Invalid current password');
+      }
+    }
+
+    await this.userService.update(userId, {
+      password: dto.newPassword,
+    });
+
+    return { message: 'Password updated successfully' };
   }
 
   async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string }> {
