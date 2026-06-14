@@ -235,6 +235,11 @@ export class BlogPostService {
     if (data.excerpt) post.excerpt = data.excerpt;
     if (data.status) post.status = data.status;
 
+    if (data.tagIds !== undefined) {
+      const tags = await this.tagService.findByIds(data.tagIds);
+      post.tags = tags;
+    }
+
     await this.postRepo.save(post);
     return this.findOne(id);
   }
