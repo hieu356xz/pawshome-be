@@ -77,4 +77,70 @@ export class EmbeddingService {
 
     return responseData.embedding.values;
   }
+
+  async classifySpecies(
+    imageBase64: string,
+    imageMimeType: string,
+    speciesList: string[],
+  ): Promise<string> {
+    if (!this.apiKey) {
+      throw new Error('GEMINI_API_KEY is not configured');
+    }
+
+    const speciesOptions = speciesList.map((s) => `- ${s}`).join('\n');
+    const prompt = `Identify the animal species in the image. Choose ONLY one of the following options:
+${speciesOptions}
+
+If the image is not an animal or you cannot identify it, reply with "Unknown".
+Your response must contain ONLY the selected option name or "Unknown" and nothing else. No markdown formatting, no bold text, no punctuation, just the raw name.`;
+
+    const startTime = Date.now();
+    this.logger.log(`Calling Gemini Vision API for classification`);
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': this.apiKey,
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  inline_data: {
+                    mime_type: imageMimeType,
+                    data: imageBase64,
+                  },
+                },
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      this.logger.error(`Gemini Classification API error: ${errorText}`);
+      throw new Error(`Failed to classify image: ${response.statusText}`);
+    }
+
+    const responseData = await response.json();
+    const duration = Date.now() - startTime;
+    const text = responseData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+
+    this.logger.log(
+      `Gemini Classification API response: ${duration}ms, result: "${text}"`,
+    );
+
+    return text;
+  }
 }
+

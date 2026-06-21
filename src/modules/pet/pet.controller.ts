@@ -10,6 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PetService } from './pet.service';
@@ -40,6 +41,19 @@ export class PetController {
     const imageMimeType = file?.mimetype;
 
     return this.service.search(imageBase64, imageMimeType, query);
+  }
+
+  @Public()
+  @Post('detect-species')
+  @UseInterceptors(FileInterceptor('image', FILE_INTERCEPTOR_OPTIONS))
+  async detectSpecies(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Image file must be provided');
+    }
+    const imageBase64 = file.buffer.toString('base64');
+    const imageMimeType = file.mimetype;
+
+    return this.service.detectSpecies(imageBase64, imageMimeType);
   }
 
   @Public()

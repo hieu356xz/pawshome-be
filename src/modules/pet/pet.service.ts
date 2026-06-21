@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -356,4 +357,43 @@ export class PetService {
 
     return { results, meta };
   }
+
+  async detectSpecies(
+    imageBase64: string,
+    imageMimeType: string,
+  ): Promise<{ speciesId: number | null; name: string | null }> {
+    const speciesRepo = this.petRepo.manager.getRepository(Species);
+    const speciesList = await speciesRepo.find();
+    const speciesNames = speciesList.map((s) => s.name);
+
+    if (speciesNames.length === 0) {
+      return { speciesId: null, name: null };
+    }
+
+    try {
+      const detectedName = await this.embeddingService.classifySpecies(
+        imageBase64,
+        imageMimeType,
+        speciesNames,
+      );
+
+      // Match the detected name with database records (case-insensitive)
+      const matchedSpecies = speciesList.find(
+        (s) => s.name.toLowerCase() === detectedName.toLowerCase(),
+      );
+
+      if (matchedSpecies) {
+        return {
+          speciesId: matchedSpecies.id,
+          name: matchedSpecies.name,
+        };
+      }
+    } catch (error) {
+      const logger = new Logger(PetService.name);
+      logger.error('Failed to detect species from image', error);
+    }
+
+    return { speciesId: null, name: null };
+  }
 }
+
